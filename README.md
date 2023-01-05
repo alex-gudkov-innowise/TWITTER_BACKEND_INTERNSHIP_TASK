@@ -12,3 +12,10 @@ npm run typeorm migration:generate -- -d ./data-source.ts -p ./migrations/<Migra
 npm run build && npm run typeorm migration:run -- -d ./data-source.ts
 npm run build && npm run typeorm migration:revert -- -d ./data-source.ts
 ```
+
+```
+psql -U postgres -h localhost
+\c twitter_db_1;
+\dt
+\q
+```
