@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -16,7 +16,7 @@ export class AuthService {
         const candidateUser = await this.usersService.getUserByEmail(dto.email);
 
         if (candidateUser) {
-            throw new HttpException('user already exists', HttpStatus.BAD_REQUEST);
+            throw new BadRequestException({ message: 'user already exists' });
         }
 
         // create user
@@ -43,7 +43,7 @@ export class AuthService {
         const user = await this.usersService.getUserByEmail(dto.email);
 
         if (!user) {
-            throw new UnauthorizedException({ message: 'user not found' });
+            throw new BadRequestException({ message: 'user already exists' });
         }
 
         // check the password correctness
