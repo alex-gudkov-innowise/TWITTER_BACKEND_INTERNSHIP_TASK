@@ -1,4 +1,5 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -9,7 +10,11 @@ import { SignUpUserDto } from './dto/sign-up-user.dto';
 
 @Injectable()
 export class AuthService {
-    constructor(private readonly usersService: UsersService, private readonly jwtService: JwtService) {}
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly jwtService: JwtService,
+        private readonly configService: ConfigService,
+    ) {}
 
     public async signUpUser(dto: SignUpUserDto) {
         // check that the user still not registered
@@ -27,7 +32,9 @@ export class AuthService {
         });
 
         // return generated tokens
-        return 'access token for ' + user.id;
+        return {
+            accessToken: this.generateAccessToken(user.id),
+        };
     }
 
     public async signInUser(dto: SignInUserDto) {
@@ -35,7 +42,9 @@ export class AuthService {
         const user = await this.validateUser(dto);
 
         // return generated tokens
-        return 'access token for ' + user.id;
+        return {
+            accessToken: this.generateAccessToken(user.id),
+        };
     }
 
     private async validateUser(dto: SignInUserDto) {
@@ -54,5 +63,20 @@ export class AuthService {
         }
 
         return user;
+    }
+
+    private generateAccessToken(userId: number) {
+        // payload object is stored in token
+        const payload = {
+            userId,
+        };
+
+        // sign a new token
+        const accessToken = this.jwtService.sign(payload, {
+            secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+            expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRES_IN'),
+        });
+
+        return accessToken;
     }
 }
