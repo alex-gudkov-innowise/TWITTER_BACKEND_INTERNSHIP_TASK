@@ -18,7 +18,6 @@ import { GuardsModule } from './guards/guards.module';
         TypeOrmModule.forRoot(typeOrmModuleOptions),
         UsersModule,
         AuthModule,
-        AuthModule,
         GuardsModule,
     ],
 })

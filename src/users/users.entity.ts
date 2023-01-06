@@ -1,4 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+
+import { RefreshTokensEntity } from 'src/auth/refresh-tokens.entity';
 
 @Entity({ name: 'users' })
 export class UsersEntity {
@@ -10,4 +12,8 @@ export class UsersEntity {
 
     @Column({ nullable: false })
     password: string;
+
+    // one user account can have many active sessions
+    @OneToMany(() => RefreshTokensEntity, (refreshToken) => refreshToken.value)
+    refreshTokens: RefreshTokensEntity[];
 }
