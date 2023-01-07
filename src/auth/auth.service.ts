@@ -1,9 +1,17 @@
 import { MailerService } from '@nestjs-modules/mailer';
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+    BadRequestException,
+    CACHE_MANAGER,
+    Inject,
+    Injectable,
+    NotFoundException,
+    UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { Repository } from 'typeorm';
 
@@ -22,6 +30,7 @@ export class AuthService {
         @InjectRepository(RefreshTokensEntity)
         private readonly refreshTokensRepository: Repository<RefreshTokensEntity>,
         private readonly mailerService: MailerService,
+        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
 
     public async signUpUser(dto: SignUpUserDto) {
@@ -33,24 +42,31 @@ export class AuthService {
 
         const verificationCode = crypto.randomBytes(3).toString('hex');
 
-        // add user with code to Redis database...
-
+        await this.cacheManager.set(verificationCode, dto);
         this.sendConfirmationEmail(dto.email, verificationCode);
 
         return { message: 'verification code was sent' };
     }
 
-    public confirmEmail(verificationCode: string) {
-        // compare verificationCode from email with verificationCode from Redis database...
-        // const hashedPassword = await bcrypt.hash(dto.password, 4);
-        // const user = await this.usersService.createUser({
-        //     ...dto,
-        //     password: hashedPassword,
-        // });
-        // return {
-        //     accessToken: this.generateAccessToken(user.id),
-        //     refreshToken: await this.generateRefreshToken(user.id),
-        // };
+    public async confirmEmail(verificationCode: string) {
+        const dto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
+
+        if (!dto) {
+            throw new BadRequestException({ message: 'invalid verification code' });
+        }
+
+        await this.cacheManager.del(verificationCode);
+
+        const hashedPassword = await bcrypt.hash(dto.password, 4);
+        const user = await this.usersService.createUser({
+            ...dto,
+            password: hashedPassword,
+        });
+
+        return {
+            accessToken: this.generateAccessToken(user.id),
+            refreshToken: await this.generateRefreshToken(user.id),
+        };
     }
 
     public async signInUser(dto: SignInUserDto) {

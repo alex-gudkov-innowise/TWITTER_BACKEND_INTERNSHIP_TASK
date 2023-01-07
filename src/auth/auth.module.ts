@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { CacheModule, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { CacheConfig } from 'cache-config';
 import { UsersEntity } from 'src/users/users.entity';
 import { UsersModule } from 'src/users/users.module';
 
@@ -15,9 +16,10 @@ import { RefreshTokensEntity } from './refresh-tokens.entity';
     providers: [AuthService],
     imports: [
         UsersModule,
-        ConfigModule,
         JwtModule.register({}),
         TypeOrmModule.forFeature([RefreshTokensEntity, UsersEntity]),
+        MailerModule,
+        CacheModule.registerAsync({ useClass: CacheConfig }),
     ],
 })
 export class AuthModule {}
