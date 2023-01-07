@@ -1,8 +1,10 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { Repository } from 'typeorm';
 
 import { UsersService } from 'src/users/users.service';
@@ -19,49 +21,43 @@ export class AuthService {
         private readonly configService: ConfigService,
         @InjectRepository(RefreshTokensEntity)
         private readonly refreshTokensRepository: Repository<RefreshTokensEntity>,
+        private readonly mailerService: MailerService,
     ) {}
 
     public async signUpUser(dto: SignUpUserDto) {
-        // check that the user still not registered
         const candidateUser = await this.usersService.getUserByEmail(dto.email);
 
         if (candidateUser) {
             throw new BadRequestException({ message: 'user already exists' });
         }
 
-        // create user
-        const hashedPassword = await bcrypt.hash(dto.password, 4);
-        const user = await this.usersService.createUser({
-            ...dto,
-            password: hashedPassword,
-        });
+        const verificationCode = crypto.randomBytes(3).toString('hex');
 
-        return {
-            accessToken: this.generateAccessToken(user.id),
-            refreshToken: await this.generateRefreshToken(user.id),
-        };
+        // add user with code to Redis database...
+
+        this.sendConfirmationEmail(dto.email, verificationCode);
+
+        return { message: 'verification code was sent' };
+    }
+
+    public confirmEmail(verificationCode: string) {
+        // compare verificationCode from email with verificationCode from Redis database...
+        // const hashedPassword = await bcrypt.hash(dto.password, 4);
+        // const user = await this.usersService.createUser({
+        //     ...dto,
+        //     password: hashedPassword,
+        // });
+        // return {
+        //     accessToken: this.generateAccessToken(user.id),
+        //     refreshToken: await this.generateRefreshToken(user.id),
+        // };
     }
 
     public async signInUser(dto: SignInUserDto) {
-        // validate the user and get it if the data is valid
-        const user = await this.validateUser(dto);
-
-        return {
-            accessToken: this.generateAccessToken(user.id),
-            refreshToken: await this.generateRefreshToken(user.id),
-        };
-    }
-
-    public async signOutUser(refreshTokenValue: string) {
-        // delete refreshToken from database
-        await this.refreshTokensRepository.delete({ value: refreshTokenValue });
-    }
-
-    private async validateUser(dto: SignInUserDto) {
         const user = await this.usersService.getUserByEmail(dto.email);
 
         if (!user) {
-            throw new BadRequestException({ message: 'user already exists' });
+            throw new NotFoundException({ message: 'user not found' });
         }
 
         const comparedPasswords = await bcrypt.compare(dto.password, user.password);
@@ -70,16 +66,64 @@ export class AuthService {
             throw new UnauthorizedException({ message: 'wrong password' });
         }
 
-        return user;
+        return {
+            accessToken: this.generateAccessToken(user.id),
+            refreshToken: await this.generateRefreshToken(user.id),
+        };
+    }
+
+    public async signOutUser(refreshTokenValue: string) {
+        await this.refreshTokensRepository.delete({ value: refreshTokenValue });
+
+        return { message: 'user signed out' };
+    }
+
+    private async sendConfirmationEmail(userEmail: string, verificationCode: string) {
+        try {
+            this.mailerService.sendMail({
+                to: userEmail,
+                subject: `${verificationCode} is your Twitter verification code`,
+                html: `
+                    <h2>      
+                        Confirm your email address
+                    </h2>
+                    <p style="font-family:Helvetica; font-size:16px;">
+                        There’s one quick step you need to complete before creating your Twitter account. Let’s make sure this is the right email address for you – please confirm this is the right address to use for your new account.
+                    </p>
+                    <p style="font-family:Helvetica; font-size:16px;">
+                        Please enter this verification code to get started on Twitter:
+                    </p>
+                    <div style="font-family:Helvetica; font-size:32px; font-weight:bold;">      
+                        ${verificationCode}
+                    </div>
+                    <div style="font-family:Helvetica; font-size:14px;">
+                        Verification codes expire after two hours
+                    </div>
+                    <div style="font-family:Helvetica; font-size:16px; margin-top:24px;">
+                        Thanks,
+                        <br>    
+                        Twitter
+                    </div>
+                    <br>
+                    <br>
+                    <span style="margin-bottom:32px; color:#8899a6; font-size: 12px; text-align: center;">
+                        Twitter, Inc.
+                    </span>
+                    <br>
+                `,
+                from: 'Twitter <alex-mailer@mail.ru>',
+            });
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error(error);
+        }
     }
 
     private generateAccessToken(userId: number) {
-        // payload object is stored in token
         const payload = {
             userId,
         };
 
-        // sign a new token
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
             expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRES_IN'),
@@ -89,7 +133,6 @@ export class AuthService {
     }
 
     private async generateRefreshToken(userId: number) {
-        // sign a new token
         const payload = {
             userId,
         };
@@ -98,7 +141,6 @@ export class AuthService {
             expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN'),
         });
 
-        // add token to database
         const user = await this.usersService.getUserById(userId);
         const refreshToken = this.refreshTokensRepository.create({
             value: refreshTokenValue,
@@ -112,7 +154,6 @@ export class AuthService {
 
     public async getNewAccessToken(refreshTokenValue: string) {
         try {
-            // verify refresh token
             const payload = this.jwtService.verify(refreshTokenValue, {
                 secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
             });
@@ -121,7 +162,6 @@ export class AuthService {
                 accessToken: this.generateAccessToken(payload.userId),
             };
         } catch (error) {
-            // delete expired token from database
             await this.refreshTokensRepository.delete({ value: refreshTokenValue });
             throw new UnauthorizedException({ message: 'refresh token is expired' });
         }

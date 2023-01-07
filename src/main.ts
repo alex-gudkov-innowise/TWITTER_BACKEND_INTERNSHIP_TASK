@@ -7,7 +7,7 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const port = process.env.PORT ?? 5000;
 
-    app.useGlobalFilters(new HttpExceptionFilter()); // used across the whole application, for every controller and every route handler
+    app.useGlobalFilters(new HttpExceptionFilter());
     await app.listen(port, () => {
         // eslint-disable-next-line no-console
         console.log(`Server started on port ${port}...`);

@@ -30,7 +30,7 @@ Built-in HTTP exceptions
 ```
 BadRequestException - 400
 UnauthorizedException - 401
-NotFoundException
+NotFoundException - 404
 ForbiddenException
 NotAcceptableException
 RequestTimeoutException

@@ -6,9 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 export class AuthGuard implements CanActivate {
     constructor(private readonly jwtService: JwtService, private readonly configService: ConfigService) {}
 
-    // the endpoint can be reached if canActivate() returns true
     public canActivate(context: ExecutionContext): boolean {
-        // get the request object from the context
         const request = context.switchToHttp().getRequest<any>();
 
         // get token from authorization header
@@ -32,6 +30,7 @@ export class AuthGuard implements CanActivate {
 
             request.currentUserId = payload.userId; // put user id into request object for further using
         } catch (error) {
+            request.currentUserId = null;
             throw new UnauthorizedException({ message: 'user not authorized' });
         }
 
