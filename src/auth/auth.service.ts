@@ -4,6 +4,7 @@ import {
     CACHE_MANAGER,
     Inject,
     Injectable,
+    InternalServerErrorException,
     NotFoundException,
     UnauthorizedException,
 } from '@nestjs/common';
@@ -43,9 +44,9 @@ export class AuthService {
         const verificationCode = crypto.randomBytes(3).toString('hex');
 
         await this.cacheManager.set(verificationCode, dto);
-        this.sendConfirmationEmail(dto.email, verificationCode);
+        const sentMailInfo = await this.sendConfirmationEmail(dto.email, verificationCode);
 
-        return { message: 'verification code was sent' };
+        return sentMailInfo;
     }
 
     public async confirmEmail(verificationCode: string) {
@@ -95,44 +96,41 @@ export class AuthService {
     }
 
     private async sendConfirmationEmail(userEmail: string, verificationCode: string) {
-        try {
-            this.mailerService.sendMail({
-                to: userEmail,
-                subject: `${verificationCode} is your Twitter verification code`,
-                html: `
-                    <h2>      
-                        Confirm your email address
-                    </h2>
-                    <p style="font-family:Helvetica; font-size:16px;">
-                        There’s one quick step you need to complete before creating your Twitter account. Let’s make sure this is the right email address for you – please confirm this is the right address to use for your new account.
-                    </p>
-                    <p style="font-family:Helvetica; font-size:16px;">
-                        Please enter this verification code to get started on Twitter:
-                    </p>
-                    <div style="font-family:Helvetica; font-size:32px; font-weight:bold;">      
-                        ${verificationCode}
-                    </div>
-                    <div style="font-family:Helvetica; font-size:14px;">
-                        Verification codes expire after two hours
-                    </div>
-                    <div style="font-family:Helvetica; font-size:16px; margin-top:24px;">
-                        Thanks,
-                        <br>    
-                        Twitter
-                    </div>
-                    <br>
-                    <br>
-                    <span style="margin-bottom:32px; color:#8899a6; font-size: 12px; text-align: center;">
-                        Twitter, Inc.
-                    </span>
-                    <br>
-                `,
-                from: 'Twitter <alex-mailer@mail.ru>',
-            });
-        } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error(error);
-        }
+        const sentMailInfo = await this.mailerService.sendMail({
+            to: userEmail,
+            subject: `${verificationCode} is your Twitter verification code`,
+            html: `
+                <h2>      
+                    Confirm your email address
+                </h2>
+                <p style="font-family:Helvetica; font-size:16px;">
+                    There’s one quick step you need to complete before creating your Twitter account. Let’s make sure this is the right email address for you – please confirm this is the right address to use for your new account.
+                </p>
+                <p style="font-family:Helvetica; font-size:16px;">
+                    Please enter this verification code to get started on Twitter:
+                </p>
+                <div style="font-family:Helvetica; font-size:32px; font-weight:bold;">      
+                    ${verificationCode}
+                </div>
+                <div style="font-family:Helvetica; font-size:14px;">
+                    Verification codes expire after two hours
+                </div>
+                <div style="font-family:Helvetica; font-size:16px; margin-top:24px;">
+                    Thanks,
+                    <br>    
+                    Twitter
+                </div>
+                <br>
+                <br>
+                <span style="margin-bottom:32px; color:#8899a6; font-size: 12px; text-align: center;">
+                    Twitter, Inc.
+                </span>
+                <br>
+            `,
+            from: 'Twitter <alex-mailer@mail.ru>',
+        });
+
+        return sentMailInfo;
     }
 
     private generateAccessToken(userId: number) {

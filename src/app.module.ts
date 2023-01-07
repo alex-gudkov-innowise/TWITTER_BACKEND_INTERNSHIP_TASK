@@ -1,12 +1,15 @@
 import { MailerModule } from '@nestjs-modules/mailer';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { MailerConfig } from 'mailer-config';
 import { TypeOrmConfig } from 'typeorm-config';
 
 import { AuthModule } from './auth/auth.module';
+import { AuthMiddleware } from './middlewares/auth.middleware';
+import { UsersController } from './users/users.controller';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -19,8 +22,13 @@ import { UsersModule } from './users/users.module';
         }),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfig }),
         MailerModule.forRootAsync({ useClass: MailerConfig }),
+        JwtModule.register({}),
         UsersModule,
         AuthModule,
     ],
 })
-export class AppModule {}
+export class AppModule {
+    public configure(consumer: MiddlewareConsumer) {
+        consumer.apply(AuthMiddleware).forRoutes(UsersController);
+    }
+}
