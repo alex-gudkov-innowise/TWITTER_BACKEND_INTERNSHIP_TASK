@@ -49,3 +49,31 @@ ServiceUnavailableException
 GatewayTimeoutException
 PreconditionFailedException
 ```
+
+Additional settings.json
+```JSON
+{
+    "editor.formatOnPaste": false,
+    "[javascript]": {
+        "editor.formatOnSave": true
+    },
+    "[html]": {
+        "editor.formatOnSave": false
+    },
+    "[json]": {
+        "editor.formatOnSave": false
+    },
+    "eslint.probe": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact",
+        "html"
+    ],
+    "eslint.alwaysShowStatus": true,
+    "eslint.format.enable": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    }
+}
+```

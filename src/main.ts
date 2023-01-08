@@ -8,6 +8,7 @@ async function bootstrap() {
     const port = process.env.PORT ?? 5000;
 
     app.useGlobalFilters(new AllExceptionsFilter());
+
     await app.listen(port, () => {
         // eslint-disable-next-line no-console
         console.log(`Server started on port ${port}...`);

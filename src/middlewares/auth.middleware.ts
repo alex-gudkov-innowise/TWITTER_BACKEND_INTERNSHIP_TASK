@@ -18,13 +18,11 @@ export class AuthMiddleware implements NestMiddleware {
         try {
             // get token from authorization header
             const authHeader = request.headers.authorization;
-
             if (!authHeader) {
                 throw new Error('empty authorization header');
             }
 
             const [tokenType, tokenValue] = authHeader.split(' ');
-
             if (tokenType !== 'Bearer' || !tokenValue) {
                 throw new Error('bearer token error');
             }

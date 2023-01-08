@@ -4,7 +4,6 @@ import {
     CACHE_MANAGER,
     Inject,
     Injectable,
-    InternalServerErrorException,
     NotFoundException,
     UnauthorizedException,
 } from '@nestjs/common';
@@ -36,13 +35,11 @@ export class AuthService {
 
     public async signUpUser(dto: SignUpUserDto) {
         const candidateUser = await this.usersService.getUserByEmail(dto.email);
-
         if (candidateUser) {
             throw new BadRequestException({ message: 'user already exists' });
         }
 
         const verificationCode = crypto.randomBytes(3).toString('hex');
-
         await this.cacheManager.set(verificationCode, dto);
         const sentMailInfo = await this.sendConfirmationEmail(dto.email, verificationCode);
 
@@ -51,12 +48,11 @@ export class AuthService {
 
     public async confirmEmail(verificationCode: string) {
         const dto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
+        await this.cacheManager.del(verificationCode);
 
         if (!dto) {
             throw new BadRequestException({ message: 'invalid verification code' });
         }
-
-        await this.cacheManager.del(verificationCode);
 
         const hashedPassword = await bcrypt.hash(dto.password, 4);
         const user = await this.usersService.createUser({
@@ -72,13 +68,11 @@ export class AuthService {
 
     public async signInUser(dto: SignInUserDto) {
         const user = await this.usersService.getUserByEmail(dto.email);
-
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
 
         const comparedPasswords = await bcrypt.compare(dto.password, user.password);
-
         if (!comparedPasswords) {
             throw new UnauthorizedException({ message: 'wrong password' });
         }
@@ -137,7 +131,6 @@ export class AuthService {
         const payload = {
             userId,
         };
-
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
             expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRES_IN'),
@@ -160,7 +153,6 @@ export class AuthService {
             value: refreshTokenValue,
             user,
         });
-
         await this.refreshTokensRepository.save(refreshToken);
 
         return refreshTokenValue;
