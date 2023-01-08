@@ -3,7 +3,6 @@ import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
 import { MailerConfig } from 'mailer-config';
 import { TypeOrmConfig } from 'typeorm-config';
 

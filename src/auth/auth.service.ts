@@ -13,9 +13,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
-import { Repository } from 'typeorm';
-
 import { UsersService } from 'src/users/users.service';
+import { Repository } from 'typeorm';
 
 import { SignInUserDto } from './dto/sign-in-user.dto';
 import { SignUpUserDto } from './dto/sign-up-user.dto';

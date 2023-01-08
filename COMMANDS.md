@@ -50,7 +50,7 @@ GatewayTimeoutException
 PreconditionFailedException
 ```
 
-Additional settings.json
+Additional settings
 ```JSON
 {
     "editor.formatOnPaste": false,
