@@ -1,4 +1,5 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
+
 import { PrivacyInfo, PrivacyInfoDecorator } from 'src/decorators/privacy-info.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 

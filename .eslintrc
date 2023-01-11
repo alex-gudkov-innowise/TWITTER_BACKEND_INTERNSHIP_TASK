@@ -87,7 +87,8 @@
             { "blankLine": "always", "next": "try", "prev": "*" },
             { "blankLine": "always", "next": "while", "prev": "*" },
             { "blankLine": "any", "next": ["const", "let"], "prev": ["const", "let"] }
-        ]
+        ],
+        "linebreak-style": ["warn", "unix"]
     },
     "settings": {
         "import/resolver": {
