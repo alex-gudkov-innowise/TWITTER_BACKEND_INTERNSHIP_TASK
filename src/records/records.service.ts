@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -11,15 +11,49 @@ import { RecordsEntity } from './records.entity';
 export class RecordsService {
     constructor(@InjectRepository(RecordsEntity) private readonly recordsRepository: Repository<RecordsEntity>) {}
 
-    public async CreateTweet(dto: CreateRecordDto, author: UsersEntity) {
-        const record = this.recordsRepository.create({
+    public async getTweetById(tweetId: number): Promise<RecordsEntity | null> {
+        return this.recordsRepository.findOneBy({ id: tweetId, isComment: false });
+    }
+
+    public async CreateTweet(dto: CreateRecordDto, author: UsersEntity): Promise<RecordsEntity> {
+        const tweet = this.recordsRepository.create({
             text: dto.text,
             isComment: false,
             author,
         });
 
-        await this.recordsRepository.save(record);
+        return this.recordsRepository.save(tweet);
+    }
 
-        return record;
+    public async CreateComment(
+        dto: CreateRecordDto,
+        author: UsersEntity,
+        tweet: RecordsEntity,
+    ): Promise<RecordsEntity> {
+        if (!tweet) {
+            throw new NotFoundException({ message: 'tweet not found' });
+        }
+
+        const comment = this.recordsRepository.create({
+            text: dto.text,
+            isComment: true,
+            author,
+            parentRecord: tweet,
+        });
+
+        return this.recordsRepository.save(comment);
+    }
+
+    public async getTweetComments(tweet: RecordsEntity): Promise<RecordsEntity[] | null> {
+        if (!tweet) {
+            throw new NotFoundException({ message: 'tweet not found' });
+        }
+
+        return this.recordsRepository.find({
+            where: {
+                isComment: true,
+                parentRecord: tweet,
+            },
+        });
     }
 }

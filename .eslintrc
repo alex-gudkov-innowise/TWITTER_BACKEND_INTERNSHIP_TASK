@@ -68,7 +68,7 @@
         "no-console": "warn",
         "no-duplicate-imports": "warn",
         "no-empty-pattern": "warn",
-        "no-return-await": "error",
+        "no-return-await": "warn",
         "no-trailing-spaces": "warn",
         "object-shorthand": "error",
         "lines-between-class-members": ["warn", "always", { "exceptAfterSingleLine": true }],

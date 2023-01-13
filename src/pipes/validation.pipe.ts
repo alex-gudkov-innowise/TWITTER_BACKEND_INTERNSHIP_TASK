@@ -14,7 +14,7 @@ export class ValidationPipe implements PipeTransform {
 
         // if errors array contains elements
         if (validationErrors.length > 0) {
-            console.log(validationErrors);
+            // console.log(validationErrors);
             throw new UnauthorizedException({ message: '12' });
             // const messages = validationErrors.map((error) => {
             //     return error.property + ' - ' + Object.values(error.constraints).join(', ');

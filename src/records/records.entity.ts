@@ -10,9 +10,6 @@ export class RecordsEntity {
     @Column({ type: 'timestamp', default: () => 'NOW()' })
     createdAt: string;
 
-    @Column({ type: 'timestamp', default: () => 'NOW()' })
-    updatedAt: string;
-
     @Column({ nullable: false })
     isComment: boolean;
 
@@ -21,16 +18,13 @@ export class RecordsEntity {
 
     @ManyToOne(() => UsersEntity, (author: UsersEntity) => author.id, {
         onDelete: 'SET NULL',
+        onUpdate: 'CASCADE',
     })
     author: UsersEntity;
 
-    @ManyToOne(() => UsersEntity, (parentRecordAuthor: UsersEntity) => parentRecordAuthor.id, {
+    @ManyToOne(() => RecordsEntity, (record: RecordsEntity) => record.id, {
         onDelete: 'SET NULL',
-    })
-    parentRecordAuthor: UsersEntity;
-
-    @ManyToOne(() => RecordsEntity, (twitterRecord: RecordsEntity) => twitterRecord.id, {
-        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE',
     })
     parentRecord: RecordsEntity;
 }
