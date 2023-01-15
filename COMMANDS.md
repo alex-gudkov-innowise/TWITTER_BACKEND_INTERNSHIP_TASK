@@ -13,9 +13,9 @@ npm i -d @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint eslin
 Migrations commands
 ```
 npm run typeorm migration:create -- ./migrations/<MigrationName>
-npm run typeorm migration:generate -- -d ./data-source.ts -p ./migrations/<MigrationName>
-npm run typeorm migration:run -- -d ./data-source.ts
-npm run typeorm migration:revert -- -d ./data-source.ts
+npm run typeorm migration:generate -- -d ./typeorm-config.ts -p ./migrations/<MigrationName>
+npm run typeorm migration:run -- -d ./typeorm-config.ts
+npm run typeorm migration:revert -- -d ./typeorm-config.ts
 ```
 
 PostgreSQL CLI

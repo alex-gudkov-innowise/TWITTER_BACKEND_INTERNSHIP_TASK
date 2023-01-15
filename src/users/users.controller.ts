@@ -1,6 +1,5 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 
-import { PrivacyInfo, PrivacyInfoDecorator } from 'src/decorators/privacy-info.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 
 import { UsersService } from './users.service';
@@ -11,9 +10,7 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
     @Get('/')
-    public getAllUsers(@PrivacyInfoDecorator() privacyInfo: PrivacyInfo) {
-        console.log(privacyInfo);
-
+    public getAllUsers() {
         return this.usersService.getAllUsers();
     }
 }

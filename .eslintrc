@@ -30,6 +30,7 @@
                 "usePrettierrc": true
             }
         ],
+        "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-member-accessibility": [
             "warn",
@@ -69,6 +70,7 @@
         "no-duplicate-imports": "warn",
         "no-empty-pattern": "warn",
         "no-return-await": "warn",
+        "require-await": "warn",
         "no-trailing-spaces": "warn",
         "object-shorthand": "error",
         "lines-between-class-members": ["warn", "always", { "exceptAfterSingleLine": true }],
@@ -87,8 +89,7 @@
             { "blankLine": "always", "next": "try", "prev": "*" },
             { "blankLine": "always", "next": "while", "prev": "*" },
             { "blankLine": "any", "next": ["const", "let"], "prev": ["const", "let"] }
-        ],
-        "linebreak-style": ["warn", "unix"]
+        ]
     },
     "settings": {
         "import/resolver": {

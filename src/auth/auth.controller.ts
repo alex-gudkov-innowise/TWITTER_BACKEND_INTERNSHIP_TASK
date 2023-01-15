@@ -1,5 +1,6 @@
 import { Body, Controller, Post, Query, UsePipes } from '@nestjs/common';
 
+import { PrivacyInfo, PrivacyInfoDecorator } from 'src/decorators/privacy-info.decorator';
 import { ValidationPipe } from 'src/pipes/validation.pipe';
 
 import { AuthService } from './auth.service';
@@ -23,8 +24,8 @@ export class AuthController {
     }
 
     @Post('/sign-in')
-    public signInUser(@Body() dto: SignInUserDto) {
-        return this.authService.signInUser(dto);
+    public signInUser(@Body() dto: SignInUserDto, @PrivacyInfoDecorator() privacyInfo: PrivacyInfo) {
+        return this.authService.signInUser(dto, privacyInfo);
     }
 
     @Post('/sign-out')

@@ -10,11 +10,13 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcryptjs from 'bcryptjs';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
+import { SentMessageInfo } from 'nodemailer';
 import { Repository } from 'typeorm';
 
+import { PrivacyInfo } from 'src/decorators/privacy-info.decorator';
 import { UsersService } from 'src/users/users.service';
 
 import { SignInUserDto } from './dto/sign-in-user.dto';
@@ -33,7 +35,7 @@ export class AuthService {
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
 
-    public async signUpUser(dto: SignUpUserDto) {
+    public async signUpUser(dto: SignUpUserDto): Promise<SentMessageInfo> {
         const candidateUser = await this.usersService.getUserByEmail(dto.email);
         if (candidateUser) {
             throw new BadRequestException({ message: 'user already exists' });
@@ -41,9 +43,8 @@ export class AuthService {
 
         const verificationCode = crypto.randomBytes(3).toString('hex');
         await this.cacheManager.set(verificationCode, dto);
-        const sentMailInfo = await this.sendConfirmationEmail(dto.email, verificationCode);
 
-        return sentMailInfo;
+        return this.sendConfirmationEmail(dto.email, verificationCode);
     }
 
     public async confirmEmail(verificationCode: string) {
@@ -54,7 +55,7 @@ export class AuthService {
             throw new BadRequestException({ message: 'invalid verification code' });
         }
 
-        const hashedPassword = await bcrypt.hash(dto.password, 4);
+        const hashedPassword = await bcryptjs.hash(dto.password, 4);
         const user = await this.usersService.createUser({
             ...dto,
             password: hashedPassword,
@@ -66,13 +67,13 @@ export class AuthService {
         };
     }
 
-    public async signInUser(dto: SignInUserDto) {
+    public async signInUser(dto: SignInUserDto, privacyInfo: PrivacyInfo) {
         const user = await this.usersService.getUserByEmail(dto.email);
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
 
-        const comparedPasswords = await bcrypt.compare(dto.password, user.password);
+        const comparedPasswords = await bcryptjs.compare(dto.password, user.password);
         if (!comparedPasswords) {
             throw new UnauthorizedException({ message: 'wrong password' });
         }
@@ -80,6 +81,7 @@ export class AuthService {
         return {
             accessToken: this.generateAccessToken(user.id),
             refreshToken: await this.generateRefreshToken(user.id),
+            sentMessageInfo: await this.sendLoginNotificationEmail(dto.email, privacyInfo),
         };
     }
 
@@ -89,42 +91,66 @@ export class AuthService {
         return { message: 'user signed out' };
     }
 
-    private async sendConfirmationEmail(userEmail: string, verificationCode: string) {
-        const sentMailInfo = await this.mailerService.sendMail({
+    private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
+        return this.mailerService.sendMail({
             to: userEmail,
-            subject: `${verificationCode} is your Twitter verification code`,
+            subject: `Security alert for ${userEmail}`,
             html: `
-                <h2>      
-                    Confirm your email address
-                </h2>
-                <p style="font-family:Helvetica; font-size:16px;">
-                    There’s one quick step you need to complete before creating your Twitter account. Let’s make sure this is the right email address for you – please confirm this is the right address to use for your new account.
-                </p>
-                <p style="font-family:Helvetica; font-size:16px;">
-                    Please enter this verification code to get started on Twitter:
-                </p>
-                <div style="font-family:Helvetica; font-size:32px; font-weight:bold;">      
-                    ${verificationCode}
+                <div style="font-family:Helvetica;">
+                    <h2>      
+                        A new sign-in
+                    </h2>
+                    <p style="font-size:16px;">
+                        We noticed a new sign-in to your Twitter Account. If this was you, you don’t need to do anything. If not, take care of your account security.
+                    </p>
+                    <div style="font-size:16px; font-style: italic;">      
+                        Ip Address: ${privacyInfo.ipAddress}
+                        <br>
+                        User Agent: ${privacyInfo.userAgent}
+                    </div>
+                    <br>
                 </div>
-                <div style="font-family:Helvetica; font-size:14px;">
-                    Verification codes expire after two hours
-                </div>
-                <div style="font-family:Helvetica; font-size:16px; margin-top:24px;">
-                    Thanks,
-                    <br>    
-                    Twitter
-                </div>
-                <br>
-                <br>
-                <span style="margin-bottom:32px; color:#8899a6; font-size: 12px; text-align: center;">
-                    Twitter, Inc.
-                </span>
-                <br>
             `,
             from: 'Twitter <alex-mailer@mail.ru>',
         });
+    }
 
-        return sentMailInfo;
+    private sendConfirmationEmail(userEmail: string, verificationCode: string): Promise<SentMessageInfo> {
+        return this.mailerService.sendMail({
+            to: userEmail,
+            subject: `${verificationCode} is your Twitter verification code`,
+            html: `
+                <div style="font-family:Helvetica;">
+                    <h2>      
+                        Confirm your email address
+                    </h2>
+                    <p style="font-size:16px;">
+                        There’s one quick step you need to complete before creating your Twitter account. Let’s make sure this is the right email address for you – please confirm this is the right address to use for your new account.
+                    </p>
+                    <p style="font-size:16px;">
+                        Please enter this verification code to get started on Twitter:
+                    </p>
+                    <div style="font-size:32px; font-weight:bold;">      
+                        ${verificationCode}
+                    </div>
+                    <div style="font-family:Helvetica; font-size:14px;">
+                        Verification codes expire after two hours
+                    </div>
+                    <div style="font-size:16px; margin-top:24px;">
+                        Thanks,
+                        <br>    
+                        Twitter
+                    </div>
+                    <br>
+                    <br>
+                    <span style="margin-bottom:32px; color:#8899a6; font-size: 12px; text-align: center;">
+                        Twitter, Inc.
+                    </span>
+                    <br>
+                </div>
+            `,
+            from: 'Twitter <alex-mailer@mail.ru>',
+        });
     }
 
     private generateAccessToken(userId: number) {

@@ -11,11 +11,24 @@ import { RecordsEntity } from './records.entity';
 export class RecordsService {
     constructor(@InjectRepository(RecordsEntity) private readonly recordsRepository: Repository<RecordsEntity>) {}
 
-    public async getTweetById(tweetId: number): Promise<RecordsEntity | null> {
-        return this.recordsRepository.findOneBy({ id: tweetId, isComment: false });
+    public getUserTweets(user: UsersEntity) {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
+        return this.recordsRepository.find({
+            where: {
+                isComment: false,
+                author: user,
+            },
+        });
     }
 
-    public async CreateTweet(dto: CreateRecordDto, author: UsersEntity): Promise<RecordsEntity> {
+    public getRecordById(recordId: number): Promise<RecordsEntity | null> {
+        return this.recordsRepository.findOneBy({ id: recordId });
+    }
+
+    public createTweet(dto: CreateRecordDto, author: UsersEntity): Promise<RecordsEntity> {
         const tweet = this.recordsRepository.create({
             text: dto.text,
             isComment: false,
@@ -25,34 +38,30 @@ export class RecordsService {
         return this.recordsRepository.save(tweet);
     }
 
-    public async CreateComment(
-        dto: CreateRecordDto,
-        author: UsersEntity,
-        tweet: RecordsEntity,
-    ): Promise<RecordsEntity> {
-        if (!tweet) {
-            throw new NotFoundException({ message: 'tweet not found' });
+    public createComment(dto: CreateRecordDto, author: UsersEntity, record: RecordsEntity): Promise<RecordsEntity> {
+        if (!record) {
+            throw new NotFoundException({ message: 'record not found' });
         }
 
         const comment = this.recordsRepository.create({
             text: dto.text,
             isComment: true,
             author,
-            parentRecord: tweet,
+            parentRecord: record,
         });
 
         return this.recordsRepository.save(comment);
     }
 
-    public async getTweetComments(tweet: RecordsEntity): Promise<RecordsEntity[] | null> {
-        if (!tweet) {
-            throw new NotFoundException({ message: 'tweet not found' });
+    public getRecordComments(record: RecordsEntity): Promise<RecordsEntity[] | null> {
+        if (!record) {
+            throw new NotFoundException({ message: 'record not found' });
         }
 
         return this.recordsRepository.find({
             where: {
                 isComment: true,
-                parentRecord: tweet,
+                parentRecord: record,
             },
         });
     }
