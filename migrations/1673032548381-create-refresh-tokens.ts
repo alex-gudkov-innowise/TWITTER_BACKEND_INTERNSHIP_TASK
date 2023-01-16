@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateRefreshTokens1673032548381 implements MigrationInterface {
-    name = 'CreateRefreshTokens1673032548381'
+    name = 'CreateRefreshTokens1673032548381';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -27,5 +27,4 @@ export class CreateRefreshTokens1673032548381 implements MigrationInterface {
             DROP TABLE "refresh_tokens"
         `);
     }
-
 }

@@ -53,16 +53,19 @@ export class RecordsService {
         return this.recordsRepository.save(comment);
     }
 
-    public getRecordComments(record: RecordsEntity): Promise<RecordsEntity[] | null> {
-        if (!record) {
-            throw new NotFoundException({ message: 'record not found' });
-        }
+    public async getRecordComments(record: RecordsEntity): Promise<RecordsEntity[] | null> {
+        const comments = await this.recordsRepository.query(`
+            WITH RECURSIVE comments("id", "text", "authorId", "path") AS (
+                SELECT t1."id", t1."text", t1."authorId", CAST(t1."id" AS CHARACTER VARYING) AS "path"
+                FROM records AS t1
+                WHERE t1."id" = 1
+                UNION
+                SELECT t2."id", t2."text", t2."authorId", CAST(comments."path" || '->' || t2."id" AS CHARACTER VARYING)
+                FROM records AS t2
+                JOIN comments ON comments."id" = t2."authorId"
+            ) SELECT * FROM comments;
+        `);
 
-        return this.recordsRepository.find({
-            where: {
-                isComment: true,
-                parentRecord: record,
-            },
-        });
+        return comments;
     }
 }

@@ -14,6 +14,6 @@ export class UsersEntity {
     password: string;
 
     // one user account can have many active sessions
-    @OneToMany(() => RefreshTokensEntity, (refreshToken) => refreshToken.value)
+    @OneToMany(() => RefreshTokensEntity, (refreshToken: RefreshTokensEntity) => refreshToken.value)
     refreshTokens: RefreshTokensEntity[];
 }

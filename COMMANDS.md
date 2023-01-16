@@ -2,28 +2,35 @@
 
 Start application in development mode 
 ```
-npm run start:dev
+$ npm run start:dev
 ```
 
 ESLint packages
 ```
-npm i -d @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint eslint-config-prettier eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint-plugin-sort-destructure-keys eslint-plugin-typescript-sort-keys prettier --save-dev
+$ npm install -d @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint eslint-config-prettier eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint-plugin-sort-destructure-keys eslint-plugin-typescript-sort-keys prettier --save-dev
 ```
 
 Migrations commands
 ```
-npm run typeorm migration:create -- ./migrations/<MigrationName>
-npm run typeorm migration:generate -- -d ./typeorm-config.ts -p ./migrations/<MigrationName>
-npm run typeorm migration:run -- -d ./typeorm-config.ts
-npm run typeorm migration:revert -- -d ./typeorm-config.ts
+$ npm run typeorm migration:create -- ./migrations/<MigrationName>
+$ npm run typeorm migration:generate -- -d ./typeorm-config.ts -p ./migrations/<MigrationName>
+$ npm run typeorm migration:run -- -d ./typeorm-config.ts
+$ npm run typeorm migration:revert -- -d ./typeorm-config.ts
 ```
 
-PostgreSQL CLI
+PostgreSQL CLI in Docker
 ```
-psql -U postgres -h localhost
-\c twitter_db_1;
-\dt
-\q
+$ docker exec -i -t postgres sh
+# psql -U postgres -h localhost
+postgres=# \c twitter
+twitter=# \dt
+```
+
+Redis CLI in Docker
+```
+$ docker exec -i -t redis sh
+/data # redis-cli
+127.0.0.1:6379> keys *
 ```
 
 Built-in HTTP exceptions
