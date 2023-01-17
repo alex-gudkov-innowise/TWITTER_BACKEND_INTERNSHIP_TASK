@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Get, Param, Post, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
@@ -22,13 +22,13 @@ export class RecordsController {
     }
 
     @Post('/tweet')
-    @UseInterceptors(FileInterceptor('imageFile'))
+    @UseInterceptors(FilesInterceptor('imageFiles'))
     public createTweet(
         @Body() dto: CreateRecordDto,
         @CurrentUserDecorator() author: UsersEntity,
-        @UploadedFile() imageFile: Express.Multer.File,
+        @UploadedFiles() imageFiles: Array<Express.Multer.File>,
     ) {
-        return this.recordsService.createTweet(dto, author, imageFile);
+        return this.recordsService.createTweet(dto, author, imageFiles);
     }
 
     @Get('/:recordId')

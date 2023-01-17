@@ -43,7 +43,7 @@ export class RecordsService {
     public async createTweet(
         dto: CreateRecordDto,
         author: UsersEntity,
-        imageFile: Express.Multer.File,
+        imageFiles: Array<Express.Multer.File>,
     ): Promise<RecordsEntity> {
         const tweet = this.recordsTreeRepository.create({
             text: dto.text,
@@ -53,13 +53,15 @@ export class RecordsService {
 
         await this.recordsTreeRepository.save(tweet);
 
-        const fileInfo = await this.filesService.createImageFile(imageFile);
-        const image = this.imagesRepository.create({
-            name: fileInfo.fileName,
-            record: tweet,
-        });
+        imageFiles.forEach(async (imageFile) => {
+            const fileInfo = await this.filesService.createImageFile(imageFile);
+            const image = this.imagesRepository.create({
+                name: fileInfo.fileName,
+                record: tweet,
+            });
 
-        await this.imagesRepository.save(image);
+            await this.imagesRepository.save(image);
+        });
 
         return tweet;
     }
