@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TreeRepository } from 'typeorm';
 
+import { FilesService } from 'src/files/files.service';
 import { UsersEntity } from 'src/users/users.entity';
 
 import { CreateRecordDto } from './dto/create-record.dto';
@@ -11,6 +12,7 @@ import { RecordsEntity } from './records.entity';
 export class RecordsService {
     constructor(
         @InjectRepository(RecordsEntity) private readonly recordsTreeRepository: TreeRepository<RecordsEntity>,
+        private readonly filesService: FilesService,
     ) {}
 
     public getUserTweets(user: UsersEntity) {
@@ -30,12 +32,18 @@ export class RecordsService {
         return this.recordsTreeRepository.findOneBy({ id: recordId });
     }
 
-    public createTweet(dto: CreateRecordDto, author: UsersEntity): Promise<RecordsEntity> {
+    public async createTweet(
+        dto: CreateRecordDto,
+        author: UsersEntity,
+        imageFile: Express.Multer.File,
+    ): Promise<RecordsEntity> {
         const tweet = this.recordsTreeRepository.create({
             text: dto.text,
             isComment: false,
             author,
         });
+
+        const fileInfo = await this.filesService.createImageFile(imageFile);
 
         return this.recordsTreeRepository.save(tweet);
     }

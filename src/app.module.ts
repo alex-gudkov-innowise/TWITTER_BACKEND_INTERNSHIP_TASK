@@ -8,6 +8,7 @@ import { MailerConfig } from 'mailer-config';
 import { TypeOrmConfig } from 'typeorm-config';
 
 import { AuthModule } from './auth/auth.module';
+import { FilesModule } from './files/files.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { RecordsController } from './records/records.controller';
 import { RecordsModule } from './records/records.module';
@@ -28,6 +29,7 @@ import { UsersModule } from './users/users.module';
         UsersModule,
         AuthModule,
         RecordsModule,
+        FilesModule,
     ],
 })
 export class AppModule {
