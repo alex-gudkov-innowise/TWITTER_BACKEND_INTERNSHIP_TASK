@@ -2,7 +2,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as path from 'path';
 
 import { MailerConfig } from 'mailer-config';
 import { TypeOrmConfig } from 'typeorm-config';
@@ -26,6 +28,9 @@ import { UsersModule } from './users/users.module';
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfig }),
         MailerModule.forRootAsync({ useClass: MailerConfig }),
         JwtModule.register({}),
+        ServeStaticModule.forRoot({
+            rootPath: path.join(__dirname, '..', 'static'),
+        }),
         UsersModule,
         AuthModule,
         RecordsModule,
