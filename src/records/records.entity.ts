@@ -1,8 +1,9 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Tree, TreeChildren, TreeParent } from 'typeorm';
 
 import { UsersEntity } from 'src/users/users.entity';
 
 @Entity({ name: 'records' })
+@Tree('materialized-path')
 export class RecordsEntity {
     @PrimaryGeneratedColumn()
     id: number;
@@ -16,15 +17,15 @@ export class RecordsEntity {
     @Column({ type: 'text', nullable: false })
     text: string;
 
-    @ManyToOne(() => UsersEntity, (author: UsersEntity) => author.id, {
+    @TreeChildren()
+    children: RecordsEntity[];
+
+    @TreeParent()
+    parent: RecordsEntity;
+
+    @ManyToOne((type) => UsersEntity, (author: UsersEntity) => author.id, {
         onDelete: 'SET NULL',
         onUpdate: 'CASCADE',
     })
     author: UsersEntity;
-
-    @ManyToOne(() => RecordsEntity, (record: RecordsEntity) => record.id, {
-        onDelete: 'SET NULL',
-        onUpdate: 'CASCADE',
-    })
-    parentRecord: RecordsEntity;
 }
