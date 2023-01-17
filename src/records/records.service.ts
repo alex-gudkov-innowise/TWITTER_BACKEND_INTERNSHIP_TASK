@@ -1,21 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TreeRepository } from 'typeorm';
+import { Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
 import { UsersEntity } from 'src/users/users.entity';
 
 import { CreateRecordDto } from './dto/create-record.dto';
+import { ImagesEntity } from './images.entity';
 import { RecordsEntity } from './records.entity';
 
 @Injectable()
 export class RecordsService {
     constructor(
         @InjectRepository(RecordsEntity) private readonly recordsTreeRepository: TreeRepository<RecordsEntity>,
+        @InjectRepository(ImagesEntity) private readonly imagesRepository: Repository<ImagesEntity>,
         private readonly filesService: FilesService,
     ) {}
 
-    public getUserTweets(user: UsersEntity) {
+    public getUserTweets(user: UsersEntity): Promise<RecordsEntity[] | null> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
@@ -25,11 +27,17 @@ export class RecordsService {
                 isComment: false,
                 author: user,
             },
+            relations: {
+                images: true,
+            },
         });
     }
 
     public getRecordById(recordId: number): Promise<RecordsEntity | null> {
-        return this.recordsTreeRepository.findOneBy({ id: recordId });
+        return this.recordsTreeRepository.findOne({
+            where: { id: recordId },
+            relations: { images: true },
+        });
     }
 
     public async createTweet(
@@ -43,9 +51,17 @@ export class RecordsService {
             author,
         });
 
-        const fileInfo = await this.filesService.createImageFile(imageFile);
+        await this.recordsTreeRepository.save(tweet);
 
-        return this.recordsTreeRepository.save(tweet);
+        const fileInfo = await this.filesService.createImageFile(imageFile);
+        const image = this.imagesRepository.create({
+            name: fileInfo.fileName,
+            record: tweet,
+        });
+
+        await this.imagesRepository.save(image);
+
+        return tweet;
     }
 
     public createComment(dto: CreateRecordDto, author: UsersEntity, record: RecordsEntity): Promise<RecordsEntity> {

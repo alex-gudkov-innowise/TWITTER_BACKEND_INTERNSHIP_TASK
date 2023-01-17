@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class UseMaterializedPathTree1673957269649 implements MigrationInterface {
-    name = 'useMaterializedPathTree1673957269649';
+    name = 'UseMaterializedPathTree1673957269649';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`

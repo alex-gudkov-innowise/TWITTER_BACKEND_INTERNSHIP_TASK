@@ -1,6 +1,8 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Tree, TreeChildren, TreeParent } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Tree, TreeChildren, TreeParent } from 'typeorm';
 
 import { UsersEntity } from 'src/users/users.entity';
+
+import { ImagesEntity } from './images.entity';
 
 @Entity({ name: 'records' })
 @Tree('materialized-path')
@@ -23,9 +25,17 @@ export class RecordsEntity {
     @TreeParent()
     parent: RecordsEntity;
 
-    @ManyToOne((type) => UsersEntity, (author: UsersEntity) => author.id, {
+    // many records can belong to user
+    @ManyToOne((type) => UsersEntity, {
         onDelete: 'SET NULL',
         onUpdate: 'CASCADE',
     })
     author: UsersEntity;
+
+    // one record can contain many images
+    @OneToMany((type) => ImagesEntity, (image: ImagesEntity) => image.record, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
+    images: ImagesEntity[];
 }
