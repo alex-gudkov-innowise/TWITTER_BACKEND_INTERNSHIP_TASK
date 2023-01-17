@@ -14,7 +14,7 @@
         "start:prod": "node dist/main",
         "prettier:write": "prettier --write ./src/**/*.ts",
         "prettier:check": "prettier --check ./src/**/*.ts",
-        "eslint:fix": "eslint --fix ./src/**/*.ts",
+        "eslint:fix": "eslint --fix --max-warnings=0 ./src/**/*.ts",
         "precommit": "lint-staged",
         "typeorm": "typeorm-ts-node-commonjs",
         "prepare": "husky install"

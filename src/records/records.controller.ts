@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
@@ -37,10 +37,10 @@ export class RecordsController {
     }
 
     @Get('/:recordId/comments')
-    public async getRecordComments(@Param('recordId') recordId: number) {
+    public async getRecordCommentsTree(@Param('recordId') recordId: number) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.recordsService.getRecordComments(record);
+        return this.recordsService.getRecordCommentsTree(record);
     }
 
     @Post('/:recordId/comment')

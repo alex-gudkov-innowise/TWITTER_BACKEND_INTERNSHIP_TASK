@@ -35,8 +35,12 @@ export class RecordsService {
 
     public getRecordById(recordId: number): Promise<RecordsEntity | null> {
         return this.recordsTreeRepository.findOne({
-            where: { id: recordId },
-            relations: { images: true },
+            where: {
+                id: recordId,
+            },
+            relations: {
+                images: true,
+            },
         });
     }
 
@@ -81,11 +85,31 @@ export class RecordsService {
         return this.recordsTreeRepository.save(comment);
     }
 
-    public getRecordComments(record: RecordsEntity): Promise<RecordsEntity | null> {
+    public async getRecordCommentsTree(record: RecordsEntity): Promise<RecordsEntity | null> {
         if (!record) {
             throw new NotFoundException({ message: 'record not found' });
         }
 
-        return this.recordsTreeRepository.findDescendantsTree(record);
+        const recordDescendantsTree = await this.recordsTreeRepository.findDescendantsTree(record, {
+            relations: ['images'],
+        });
+
+        const recordCommentsTree = this.filterRecordDescendantsTreeForComments(recordDescendantsTree);
+
+        return recordCommentsTree;
+    }
+
+    private filterRecordDescendantsTreeForComments(recordDescendantsTree: RecordsEntity): RecordsEntity {
+        recordDescendantsTree.children = recordDescendantsTree.children.filter((childRecord: RecordsEntity) => {
+            if (childRecord.isComment) {
+                childRecord = this.filterRecordDescendantsTreeForComments(childRecord);
+
+                return true;
+            } else {
+                return false;
+            }
+        });
+
+        return recordDescendantsTree;
     }
 }
