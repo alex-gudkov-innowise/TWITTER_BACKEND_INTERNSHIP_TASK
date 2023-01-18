@@ -16,6 +16,9 @@ export class RecordsEntity {
     @Column({ nullable: false })
     isComment: boolean;
 
+    @Column({ nullable: false })
+    isRetweet: boolean;
+
     @Column({ type: 'text', nullable: false })
     text: string;
 

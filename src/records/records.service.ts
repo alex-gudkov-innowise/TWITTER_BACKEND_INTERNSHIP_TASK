@@ -53,6 +53,7 @@ export class RecordsService {
         const tweet = this.recordsTreeRepository.create({
             text: dto.text,
             isComment: false,
+            isRetweet: false,
             author,
         });
 
@@ -71,6 +72,39 @@ export class RecordsService {
         return tweet;
     }
 
+    public async createRetweet(
+        dto: CreateRecordDto,
+        author: UsersEntity,
+        record: RecordsEntity,
+        imageFiles: Array<Express.Multer.File> = [],
+    ): Promise<RecordsEntity> {
+        if (!record) {
+            throw new NotFoundException({ message: 'record not found' });
+        }
+
+        const retweet = this.recordsTreeRepository.create({
+            text: dto.text,
+            isComment: false,
+            isRetweet: true,
+            author,
+            parent: record,
+        });
+
+        await this.recordsTreeRepository.save(retweet);
+
+        imageFiles.forEach(async (imageFile) => {
+            const fileName = await this.filesService.writeImageFile(imageFile);
+            const image = this.imagesRepository.create({
+                name: fileName,
+                record: retweet,
+            });
+
+            await this.imagesRepository.save(image);
+        });
+
+        return retweet;
+    }
+
     public async createComment(
         dto: CreateRecordDto,
         author: UsersEntity,
@@ -84,6 +118,7 @@ export class RecordsService {
         const comment = this.recordsTreeRepository.create({
             text: dto.text,
             isComment: true,
+            isRetweet: false,
             author,
             parent: record,
         });
@@ -141,8 +176,8 @@ export class RecordsService {
             .where(`images."recordId" = :recordId`, { recordId: record.id })
             .getMany();
 
-        recordImages.forEach(async (recordImage: RecordImagesEntity) => {
-            await this.filesService.removeImageFile(recordImage.name);
+        recordImages.forEach((recordImage: RecordImagesEntity) => {
+            this.filesService.removeImageFile(recordImage.name);
         });
 
         await this.imagesRepository.remove(recordImages);

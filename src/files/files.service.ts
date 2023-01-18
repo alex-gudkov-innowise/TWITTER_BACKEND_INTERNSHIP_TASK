@@ -34,9 +34,12 @@ export class FilesService {
         return imageExtensions.includes(fileExtension.toLowerCase());
     }
 
-    public removeImageFile(fileName: string): Promise<void> {
+    public removeImageFile(fileName: string): void {
         const filePath = path.join(__dirname, '..', '..', 'static', 'images', fileName);
+        const isPathExists = fs.existsSync(filePath);
 
-        return fs.promises.rm(filePath);
+        if (isPathExists) {
+            fs.promises.rm(filePath);
+        }
     }
 }

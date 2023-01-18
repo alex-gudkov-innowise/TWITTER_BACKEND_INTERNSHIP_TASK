@@ -31,16 +31,17 @@ export class RecordsController {
         return this.recordsService.createTweet(dto, author, imageFiles);
     }
 
-    @Get('/:recordId')
-    public getRecord(@Param('recordId') recordId: string) {
-        return this.recordsService.getRecordById(recordId);
-    }
-
-    @Get('/:recordId/comments')
-    public async getRecordCommentsTree(@Param('recordId') recordId: string) {
+    @Post('/:recordId/retweet')
+    @UseInterceptors(FilesInterceptor('imageFiles'))
+    public async createRetweet(
+        @Body() dto: CreateRecordDto,
+        @CurrentUserDecorator() author: UsersEntity,
+        @Param('recordId') recordId: string,
+        @UploadedFiles() imageFiles: Array<Express.Multer.File>,
+    ) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.recordsService.getRecordCommentsTree(record);
+        return this.recordsService.createRetweet(dto, author, record, imageFiles);
     }
 
     @Post('/:recordId/comment')
@@ -54,6 +55,18 @@ export class RecordsController {
         const record = await this.recordsService.getRecordById(recordId);
 
         return this.recordsService.createComment(dto, author, record, imageFiles);
+    }
+
+    @Get('/:recordId')
+    public getRecordById(@Param('recordId') recordId: string) {
+        return this.recordsService.getRecordById(recordId);
+    }
+
+    @Get('/:recordId/comments')
+    public async getRecordCommentsTree(@Param('recordId') recordId: string) {
+        const record = await this.recordsService.getRecordById(recordId);
+
+        return this.recordsService.getRecordCommentsTree(record);
     }
 
     @Delete('/:recordId')
