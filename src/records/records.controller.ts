@@ -44,14 +44,16 @@ export class RecordsController {
     }
 
     @Post('/:recordId/comment')
+    @UseInterceptors(FilesInterceptor('imageFiles'))
     public async createComment(
         @Body() dto: CreateRecordDto,
         @CurrentUserDecorator() author: UsersEntity,
         @Param('recordId') recordId: string,
+        @UploadedFiles() imageFiles: Array<Express.Multer.File>,
     ) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.recordsService.createComment(dto, author, record);
+        return this.recordsService.createComment(dto, author, record, imageFiles);
     }
 
     @Delete('/:recordId')

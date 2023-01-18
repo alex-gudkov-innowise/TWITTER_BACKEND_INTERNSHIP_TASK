@@ -48,7 +48,7 @@ export class RecordsService {
     public async createTweet(
         dto: CreateRecordDto,
         author: UsersEntity,
-        imageFiles: Array<Express.Multer.File>,
+        imageFiles: Array<Express.Multer.File> = [],
     ): Promise<RecordsEntity> {
         const tweet = this.recordsTreeRepository.create({
             text: dto.text,
@@ -71,7 +71,12 @@ export class RecordsService {
         return tweet;
     }
 
-    public createComment(dto: CreateRecordDto, author: UsersEntity, record: RecordsEntity): Promise<RecordsEntity> {
+    public async createComment(
+        dto: CreateRecordDto,
+        author: UsersEntity,
+        record: RecordsEntity,
+        imageFiles: Array<Express.Multer.File> = [],
+    ): Promise<RecordsEntity> {
         if (!record) {
             throw new NotFoundException({ message: 'record not found' });
         }
@@ -83,7 +88,19 @@ export class RecordsService {
             parent: record,
         });
 
-        return this.recordsTreeRepository.save(comment);
+        await this.recordsTreeRepository.save(comment);
+
+        imageFiles.forEach(async (imageFile) => {
+            const fileName = await this.filesService.writeImageFile(imageFile);
+            const image = this.imagesRepository.create({
+                name: fileName,
+                record: comment,
+            });
+
+            await this.imagesRepository.save(image);
+        });
+
+        return comment;
     }
 
     public async getRecordCommentsTree(record: RecordsEntity): Promise<RecordsEntity | null> {
