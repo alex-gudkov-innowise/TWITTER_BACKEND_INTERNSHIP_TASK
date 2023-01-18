@@ -2,13 +2,13 @@ import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Tree, Tre
 
 import { UsersEntity } from 'src/users/users.entity';
 
-import { ImagesEntity } from './images.entity';
+import { RecordImagesEntity } from './record-images.entity';
 
 @Entity({ name: 'records' })
 @Tree('materialized-path')
 export class RecordsEntity {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
 
     @Column({ type: 'timestamp', default: () => 'NOW()' })
     createdAt: string;
@@ -22,20 +22,16 @@ export class RecordsEntity {
     @TreeChildren()
     children: RecordsEntity[];
 
-    @TreeParent()
+    @TreeParent({
+        onDelete: 'SET NULL',
+    })
     parent: RecordsEntity;
 
-    // many records can belong to user
     @ManyToOne((type) => UsersEntity, {
         onDelete: 'SET NULL',
-        onUpdate: 'CASCADE',
     })
     author: UsersEntity;
 
-    // one record can contain many images
-    @OneToMany((type) => ImagesEntity, (image: ImagesEntity) => image.record, {
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-    })
-    images: ImagesEntity[];
+    @OneToMany((type) => RecordImagesEntity, (image: RecordImagesEntity) => image.record)
+    images: RecordImagesEntity[];
 }

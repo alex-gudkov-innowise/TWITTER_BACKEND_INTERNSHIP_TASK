@@ -15,13 +15,13 @@ export class UsersService {
         return allUsers;
     }
 
-    public async getUserById(id: number): Promise<UsersEntity> {
+    public async getUserById(id: string): Promise<UsersEntity | null> {
         const user = await this.usersRepository.findOneBy({ id });
 
         return user;
     }
 
-    public async getUserByEmail(email: string): Promise<UsersEntity> {
+    public async getUserByEmail(email: string): Promise<UsersEntity | null> {
         const user = await this.usersRepository.findOneBy({ email });
 
         return user;

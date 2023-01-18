@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Query, UsePipes } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
 
 import { PrivacyInfo, PrivacyInfoDecorator } from 'src/decorators/privacy-info.decorator';
 import { ValidationPipe } from 'src/pipes/validation.pipe';
@@ -30,10 +30,10 @@ export class AuthController {
 
     @Post('/sign-out')
     public signOutUser(@Body() dto: RefreshTokenDto) {
-        this.authService.signOutUser(dto.refreshToken);
+        return this.authService.signOutUser(dto.refreshToken);
     }
 
-    @Post('/new-token')
+    @Get('/new-access-token')
     public getNewAccessToken(@Body() dto: RefreshTokenDto) {
         return this.authService.getNewAccessToken(dto.refreshToken);
     }

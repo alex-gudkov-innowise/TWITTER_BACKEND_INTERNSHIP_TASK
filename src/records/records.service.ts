@@ -7,14 +7,14 @@ import { FilesService } from 'src/files/files.service';
 import { UsersEntity } from 'src/users/users.entity';
 
 import { CreateRecordDto } from './dto/create-record.dto';
-import { ImagesEntity } from './images.entity';
+import { RecordImagesEntity } from './record-images.entity';
 import { RecordsEntity } from './records.entity';
 
 @Injectable()
 export class RecordsService {
     constructor(
         @InjectRepository(RecordsEntity) private readonly recordsTreeRepository: TreeRepository<RecordsEntity>,
-        @InjectRepository(ImagesEntity) private readonly imagesRepository: Repository<ImagesEntity>,
+        @InjectRepository(RecordImagesEntity) private readonly imagesRepository: Repository<RecordImagesEntity>,
         private readonly filesService: FilesService,
     ) {}
 
@@ -34,7 +34,7 @@ export class RecordsService {
         });
     }
 
-    public getRecordById(recordId: any): Promise<RecordsEntity | null> {
+    public getRecordById(recordId: string): Promise<RecordsEntity | null> {
         return this.recordsTreeRepository.findOne({
             where: {
                 id: recordId,
@@ -124,7 +124,7 @@ export class RecordsService {
             .where(`images."recordId" = :recordId`, { recordId: record.id })
             .getMany();
 
-        recordImages.forEach(async (recordImage: ImagesEntity) => {
+        recordImages.forEach(async (recordImage: RecordImagesEntity) => {
             await this.filesService.removeImageFile(recordImage.name);
         });
 

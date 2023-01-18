@@ -15,7 +15,7 @@ export class RecordsController {
     constructor(private readonly recordsService: RecordsService, private readonly usersService: UsersService) {}
 
     @Get('/user/:userId')
-    public async getUserTweets(@Param('userId') userId: number) {
+    public async getUserTweets(@Param('userId') userId: string) {
         const user = await this.usersService.getUserById(userId);
 
         return this.recordsService.getUserTweets(user);
@@ -32,12 +32,12 @@ export class RecordsController {
     }
 
     @Get('/:recordId')
-    public getRecord(@Param('recordId') recordId: number) {
+    public getRecord(@Param('recordId') recordId: string) {
         return this.recordsService.getRecordById(recordId);
     }
 
     @Get('/:recordId/comments')
-    public async getRecordCommentsTree(@Param('recordId') recordId: number) {
+    public async getRecordCommentsTree(@Param('recordId') recordId: string) {
         const record = await this.recordsService.getRecordById(recordId);
 
         return this.recordsService.getRecordCommentsTree(record);
@@ -47,7 +47,7 @@ export class RecordsController {
     public async createComment(
         @Body() dto: CreateRecordDto,
         @CurrentUserDecorator() author: UsersEntity,
-        @Param('recordId') recordId: number,
+        @Param('recordId') recordId: string,
     ) {
         const record = await this.recordsService.getRecordById(recordId);
 
@@ -55,7 +55,7 @@ export class RecordsController {
     }
 
     @Delete('/:recordId')
-    public async removeRecord(@Param('recordId') recordId: number) {
+    public async removeRecord(@Param('recordId') recordId: string) {
         const record = await this.recordsService.getRecordById(recordId);
 
         return this.recordsService.removeRecord(record);

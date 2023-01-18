@@ -78,17 +78,18 @@ export class AuthService {
             throw new UnauthorizedException({ message: 'wrong password' });
         }
 
+        await this.sendLoginNotificationEmail(dto.email, privacyInfo);
+
         return {
             accessToken: this.generateAccessToken(user.id),
             refreshToken: await this.generateRefreshToken(user.id),
-            sentMessageInfo: await this.sendLoginNotificationEmail(dto.email, privacyInfo),
         };
     }
 
-    public async signOutUser(refreshTokenValue: string) {
-        await this.refreshTokensRepository.delete({ value: refreshTokenValue });
+    public async signOutUser(refreshTokenValue: string): Promise<RefreshTokensEntity> {
+        const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
 
-        return { message: 'user signed out' };
+        return this.refreshTokensRepository.remove(refreshToken);
     }
 
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
@@ -153,7 +154,7 @@ export class AuthService {
         });
     }
 
-    private generateAccessToken(userId: number) {
+    private generateAccessToken(userId: string) {
         const payload = {
             userId,
         };
@@ -165,7 +166,7 @@ export class AuthService {
         return accessToken;
     }
 
-    private async generateRefreshToken(userId: number) {
+    private async generateRefreshToken(userId: string) {
         const payload = {
             userId,
         };
