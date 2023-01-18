@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
@@ -52,5 +52,12 @@ export class RecordsController {
         const record = await this.recordsService.getRecordById(recordId);
 
         return this.recordsService.createComment(dto, author, record);
+    }
+
+    @Delete('/:recordId')
+    public async removeRecord(@Param('recordId') recordId: number) {
+        const record = await this.recordsService.getRecordById(recordId);
+
+        return this.recordsService.removeRecord(record);
     }
 }

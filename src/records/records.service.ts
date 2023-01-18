@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, TreeRepository } from 'typeorm';
+import { async } from 'rxjs';
+import { DeleteResult, Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
 import { UsersEntity } from 'src/users/users.entity';
@@ -33,7 +34,7 @@ export class RecordsService {
         });
     }
 
-    public getRecordById(recordId: number): Promise<RecordsEntity | null> {
+    public getRecordById(recordId: any): Promise<RecordsEntity | null> {
         return this.recordsTreeRepository.findOne({
             where: {
                 id: recordId,
@@ -58,9 +59,9 @@ export class RecordsService {
         await this.recordsTreeRepository.save(tweet);
 
         imageFiles.forEach(async (imageFile) => {
-            const fileInfo = await this.filesService.createImageFile(imageFile);
+            const fileName = await this.filesService.writeImageFile(imageFile);
             const image = this.imagesRepository.create({
-                name: fileInfo.fileName,
+                name: fileName,
                 record: tweet,
             });
 
@@ -111,5 +112,24 @@ export class RecordsService {
         });
 
         return recordDescendantsTree;
+    }
+
+    public async removeRecord(record: RecordsEntity): Promise<RecordsEntity> {
+        if (!record) {
+            throw new NotFoundException({ message: 'record not found' });
+        }
+
+        const recordImages = await this.imagesRepository
+            .createQueryBuilder('images')
+            .where(`images."recordId" = :recordId`, { recordId: record.id })
+            .getMany();
+
+        recordImages.forEach(async (recordImage: ImagesEntity) => {
+            await this.filesService.removeImageFile(recordImage.name);
+        });
+
+        await this.imagesRepository.remove(recordImages);
+
+        return this.recordsTreeRepository.remove(record);
     }
 }

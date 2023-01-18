@@ -8,15 +8,13 @@ import * as uuid from 'uuid';
 export class FilesService {
     constructor(private configService: ConfigService) {}
 
-    public async createImageFile(file: Express.Multer.File) {
-        // check the valid loaded file
+    public async writeImageFile(file: Express.Multer.File): Promise<string> {
         const fileExtension = path.extname(file.originalname).toLowerCase();
 
-        if (!this.isFileImage(fileExtension)) {
+        if (!this.isValidImageExtension(fileExtension)) {
             throw new BadRequestException({ message: 'invalid image type' });
         }
 
-        // generate unique file name
         const fileName = uuid.v4() + fileExtension;
         const filePath = path.join(__dirname, '..', '..', 'static', 'images');
         const isPathExists = fs.existsSync(filePath);
@@ -27,15 +25,18 @@ export class FilesService {
 
         await fs.promises.writeFile(path.join(filePath, fileName), file.buffer);
 
-        return {
-            filePath,
-            fileName,
-        };
+        return fileName;
     }
 
-    private isFileImage(fileExtension: string): boolean {
+    private isValidImageExtension(fileExtension: string): boolean {
         const imageExtensions = this.configService.get<string>('IMAGE_EXTENSIONS').toLowerCase().split(' ');
 
         return imageExtensions.includes(fileExtension.toLowerCase());
+    }
+
+    public removeImageFile(fileName: string): Promise<void> {
+        const filePath = path.join(__dirname, '..', '..', 'static', 'images', fileName);
+
+        return fs.promises.rm(filePath);
     }
 }
