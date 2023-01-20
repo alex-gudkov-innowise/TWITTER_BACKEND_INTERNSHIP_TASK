@@ -21,7 +21,7 @@
         "node": true,
         "jest": true
     },
-    "ignorePatterns": [".eslintrc.js"],
+    "ignorePatterns": [".eslintrc"],
     "rules": {
         "prettier/prettier": [
             "warn",
@@ -30,6 +30,7 @@
                 "usePrettierrc": true
             }
         ],
+        "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-member-accessibility": [
             "warn",
@@ -68,19 +69,20 @@
         "no-console": "warn",
         "no-duplicate-imports": "warn",
         "no-empty-pattern": "warn",
-        "no-return-await": "error",
+        "no-return-await": "warn",
+        "require-await": "warn",
         "no-trailing-spaces": "warn",
         "object-shorthand": "error",
         "lines-between-class-members": ["warn", "always", { "exceptAfterSingleLine": true }],
         "padding-line-between-statements": [
             "warn",
-            { "blankLine": "always", "next": "*", "prev": ["const", "let"] },
+            { "blankLine": "any", "next": "*", "prev": ["const", "let"] },
             { "blankLine": "always", "next": "class", "prev": "*" },
             { "blankLine": "always", "next": "export", "prev": "*" },
             { "blankLine": "any", "next": "export", "prev": "export" },
             { "blankLine": "always", "next": "for", "prev": "*" },
             { "blankLine": "always", "next": "function", "prev": "*" },
-            { "blankLine": "always", "next": "if", "prev": "*" },
+            { "blankLine": "any", "next": "if", "prev": "*" },
             { "blankLine": "always", "next": "*", "prev": "if" },
             { "blankLine": "always", "next": "return", "prev": "*" },
             { "blankLine": "always", "next": "switch", "prev": "*" },
