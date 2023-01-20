@@ -34,6 +34,45 @@ export class RecordsService {
         });
     }
 
+    public getRetweetById(retweetId: string): Promise<RecordsEntity | null> {
+        return this.recordsTreeRepository.findOne({
+            where: {
+                id: retweetId,
+                isRetweet: true,
+                isComment: false,
+            },
+            relations: {
+                images: true,
+            },
+        });
+    }
+
+    public getTweetById(tweetId: string): Promise<RecordsEntity | null> {
+        return this.recordsTreeRepository.findOne({
+            where: {
+                id: tweetId,
+                isRetweet: false,
+                isComment: false,
+            },
+            relations: {
+                images: true,
+            },
+        });
+    }
+
+    public getCommentById(commentId: string): Promise<RecordsEntity | null> {
+        return this.recordsTreeRepository.findOne({
+            where: {
+                id: commentId,
+                isRetweet: false,
+                isComment: true,
+            },
+            relations: {
+                images: true,
+            },
+        });
+    }
+
     public getRecordById(recordId: string): Promise<RecordsEntity | null> {
         return this.recordsTreeRepository.findOne({
             where: {

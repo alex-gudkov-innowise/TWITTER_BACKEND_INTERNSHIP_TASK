@@ -57,9 +57,19 @@ export class RecordsController {
         return this.recordsService.createComment(dto, author, record, imageFiles);
     }
 
-    @Get('/:recordId')
-    public getRecordById(@Param('recordId') recordId: string) {
-        return this.recordsService.getRecordById(recordId);
+    @Get('/:tweetId')
+    public getTweetById(@Param('tweetId') tweetId: string) {
+        return this.recordsService.getTweetById(tweetId);
+    }
+
+    @Get('/:commentId')
+    public getCommentById(@Param('commentId') commentId: string) {
+        return this.recordsService.getCommentById(commentId);
+    }
+
+    @Get('/:retweetId')
+    public getRetweetById(@Param('retweetId') retweetId: string) {
+        return this.recordsService.getRetweetById(retweetId);
     }
 
     @Get('/:recordId/comments')
