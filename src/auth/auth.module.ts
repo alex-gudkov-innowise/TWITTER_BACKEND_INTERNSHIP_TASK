@@ -9,6 +9,7 @@ import { UsersModule } from 'src/users/users.module';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { RefreshTokensSessionsEntity } from './refresh-tokens-sessions.entity';
 import { RefreshTokensEntity } from './refresh-tokens.entity';
 
 @Module({
@@ -17,7 +18,7 @@ import { RefreshTokensEntity } from './refresh-tokens.entity';
     imports: [
         UsersModule,
         JwtModule.register({}),
-        TypeOrmModule.forFeature([RefreshTokensEntity, UsersEntity]),
+        TypeOrmModule.forFeature([RefreshTokensEntity, UsersEntity, RefreshTokensSessionsEntity]),
         MailerModule,
         CacheModule.registerAsync({ useClass: CacheConfig }),
     ],

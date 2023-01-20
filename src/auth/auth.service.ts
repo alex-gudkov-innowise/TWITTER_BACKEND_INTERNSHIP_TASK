@@ -15,12 +15,16 @@ import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { SentMessageInfo } from 'nodemailer';
 import { Repository } from 'typeorm';
+import * as uuid from 'uuid';
 
-import { PrivacyInfo } from 'src/decorators/privacy-info.decorator';
+import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
+import { SessionEntity } from 'src/interfaces/session-entity.interface';
+import { UsersEntity } from 'src/users/users.entity';
 import { UsersService } from 'src/users/users.service';
 
 import { SignInUserDto } from './dto/sign-in-user.dto';
 import { SignUpUserDto } from './dto/sign-up-user.dto';
+import { RefreshTokensSessionsEntity } from './refresh-tokens-sessions.entity';
 import { RefreshTokensEntity } from './refresh-tokens.entity';
 
 @Injectable()
@@ -31,6 +35,8 @@ export class AuthService {
         private readonly configService: ConfigService,
         @InjectRepository(RefreshTokensEntity)
         private readonly refreshTokensRepository: Repository<RefreshTokensEntity>,
+        @InjectRepository(RefreshTokensSessionsEntity)
+        private readonly refreshTokensSessionsRepository: Repository<RefreshTokensSessionsEntity>,
         private readonly mailerService: MailerService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
@@ -61,9 +67,11 @@ export class AuthService {
             password: hashedPassword,
         });
 
+        // create session...
+
         return {
-            accessToken: this.generateAccessToken(user.id),
-            refreshToken: await this.generateRefreshToken(user.id),
+            accessToken: this.generateAccessToken(user),
+            refreshToken: await this.generateRefreshToken(user),
         };
     }
 
@@ -78,18 +86,44 @@ export class AuthService {
             throw new UnauthorizedException({ message: 'wrong password' });
         }
 
+        const accessToken = this.generateAccessToken(user);
+        const refreshToken = await this.generateRefreshToken(user);
+        const refreshTokenSession = await this.createUserSession(refreshToken, privacyInfo);
+
         await this.sendLoginNotificationEmail(dto.email, privacyInfo);
 
         return {
-            accessToken: this.generateAccessToken(user.id),
-            refreshToken: await this.generateRefreshToken(user.id),
+            accessToken,
+            refreshToken: refreshToken.value,
         };
     }
 
     public async signOutUser(refreshTokenValue: string): Promise<RefreshTokensEntity> {
         const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
 
+        // remove session...
+
         return this.refreshTokensRepository.remove(refreshToken);
+    }
+
+    private async createUserSession(
+        refreshToken: RefreshTokensEntity,
+        privacyInfo: PrivacyInfo,
+    ): Promise<RefreshTokensSessionsEntity> {
+        const session: SessionEntity = {
+            id: uuid.v4(),
+            privacyInfo,
+            loggedAt: new Date(),
+        };
+        const sessionLifetimeInSeconds = this.configService.get<number>('SESSION_LIFETIME_IN_SECONDS');
+        const refreshTokenSession = this.refreshTokensSessionsRepository.create({
+            sessionId: session.id,
+            refreshToken,
+        });
+
+        await this.cacheManager.set(session.id, session, sessionLifetimeInSeconds);
+
+        return this.refreshTokensSessionsRepository.save(refreshTokenSession);
     }
 
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
@@ -154,9 +188,13 @@ export class AuthService {
         });
     }
 
-    private generateAccessToken(userId: string) {
+    private generateAccessToken(user: UsersEntity): string {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
         const payload = {
-            userId,
+            userId: user.id,
         };
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
@@ -166,23 +204,24 @@ export class AuthService {
         return accessToken;
     }
 
-    private async generateRefreshToken(userId: string) {
+    private generateRefreshToken(user: UsersEntity): Promise<RefreshTokensEntity> {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
         const payload = {
-            userId,
+            userId: user.id,
         };
         const refreshTokenValue = this.jwtService.sign(payload, {
             secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
             expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN'),
         });
-
-        const user = await this.usersService.getUserById(userId);
         const refreshToken = this.refreshTokensRepository.create({
             value: refreshTokenValue,
             user,
         });
-        await this.refreshTokensRepository.save(refreshToken);
 
-        return refreshTokenValue;
+        return this.refreshTokensRepository.save(refreshToken);
     }
 
     public async getNewAccessToken(refreshTokenValue: string) {

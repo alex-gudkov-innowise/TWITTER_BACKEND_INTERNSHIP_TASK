@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
 
-import { PrivacyInfo, PrivacyInfoDecorator } from 'src/decorators/privacy-info.decorator';
+import { PrivacyInfoDecorator } from 'src/decorators/privacy-info.decorator';
+import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 import { ValidationPipe } from 'src/pipes/validation.pipe';
 
 import { AuthService } from './auth.service';
