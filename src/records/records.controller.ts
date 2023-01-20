@@ -57,32 +57,46 @@ export class RecordsController {
         return this.recordsService.createComment(dto, author, record, imageFiles);
     }
 
-    @Get('/:tweetId')
+    @Get('/tweet/:tweetId')
     public getTweetById(@Param('tweetId') tweetId: string) {
         return this.recordsService.getTweetById(tweetId);
     }
 
-    @Get('/:commentId')
+    @Get('/comment/:commentId')
     public getCommentById(@Param('commentId') commentId: string) {
         return this.recordsService.getCommentById(commentId);
     }
 
-    @Get('/:retweetId')
+    @Get('/retweet/:retweetId')
     public getRetweetById(@Param('retweetId') retweetId: string) {
         return this.recordsService.getRetweetById(retweetId);
     }
 
     @Get('/:recordId/comments')
-    public async getRecordCommentsTree(@Param('recordId') recordId: string) {
+    public async getCommentsTree(@Param('recordId') recordId: string) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.recordsService.getRecordCommentsTree(record);
+        return this.recordsService.getCommentsTree(record);
     }
 
-    @Delete('/:recordId')
-    public async removeRecord(@Param('recordId') recordId: string) {
-        const record = await this.recordsService.getRecordById(recordId);
+    @Delete('/tweet/:tweetId')
+    public async removeTweet(@Param('tweetId') tweetId: string) {
+        const tweet = await this.recordsService.getTweetById(tweetId);
 
-        return this.recordsService.removeRecord(record);
+        return this.recordsService.removeTweet(tweet);
+    }
+
+    @Delete('/comment/:commentId')
+    public async removeComment(@Param('commentId') commentId: string) {
+        const comment = await this.recordsService.getCommentById(commentId);
+
+        return this.recordsService.removeComment(comment);
+    }
+
+    @Delete('/retweet/:retweetId')
+    public async removeRetweet(@Param('retweetId') retweetId: string) {
+        const retweet = await this.recordsService.getTweetById(retweetId);
+
+        return this.recordsService.removeRetweet(retweet);
     }
 }

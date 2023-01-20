@@ -14,7 +14,7 @@ import { RecordsEntity } from './records.entity';
 export class RecordsService {
     constructor(
         @InjectRepository(RecordsEntity) private readonly recordsTreeRepository: TreeRepository<RecordsEntity>,
-        @InjectRepository(RecordImagesEntity) private readonly imagesRepository: Repository<RecordImagesEntity>,
+        @InjectRepository(RecordImagesEntity) private readonly recordImagesRepository: Repository<RecordImagesEntity>,
         private readonly filesService: FilesService,
     ) {}
 
@@ -100,12 +100,12 @@ export class RecordsService {
 
         imageFiles.forEach(async (imageFile) => {
             const fileName = await this.filesService.writeImageFile(imageFile);
-            const image = this.imagesRepository.create({
+            const image = this.recordImagesRepository.create({
                 name: fileName,
                 record: tweet,
             });
 
-            await this.imagesRepository.save(image);
+            await this.recordImagesRepository.save(image);
         });
 
         return tweet;
@@ -133,12 +133,12 @@ export class RecordsService {
 
         imageFiles.forEach(async (imageFile) => {
             const fileName = await this.filesService.writeImageFile(imageFile);
-            const image = this.imagesRepository.create({
+            const image = this.recordImagesRepository.create({
                 name: fileName,
                 record: retweet,
             });
 
-            await this.imagesRepository.save(image);
+            await this.recordImagesRepository.save(image);
         });
 
         return retweet;
@@ -166,35 +166,35 @@ export class RecordsService {
 
         imageFiles.forEach(async (imageFile) => {
             const fileName = await this.filesService.writeImageFile(imageFile);
-            const image = this.imagesRepository.create({
+            const image = this.recordImagesRepository.create({
                 name: fileName,
                 record: comment,
             });
 
-            await this.imagesRepository.save(image);
+            await this.recordImagesRepository.save(image);
         });
 
         return comment;
     }
 
-    public async getRecordCommentsTree(record: RecordsEntity): Promise<RecordsEntity | null> {
+    public async getCommentsTree(record: RecordsEntity): Promise<RecordsEntity> {
         if (!record) {
             throw new NotFoundException({ message: 'record not found' });
         }
 
-        const recordDescendantsTree = await this.recordsTreeRepository.findDescendantsTree(record, {
+        const descendantsTree = await this.recordsTreeRepository.findDescendantsTree(record, {
             relations: ['images'],
         });
 
-        const recordCommentsTree = this.filterRecordDescendantsTreeForComments(recordDescendantsTree);
+        const commentsTree = this.filterDescendantsTreeForCommentsTree(descendantsTree);
 
-        return recordCommentsTree;
+        return commentsTree;
     }
 
-    private filterRecordDescendantsTreeForComments(recordDescendantsTree: RecordsEntity): RecordsEntity {
-        recordDescendantsTree.children = recordDescendantsTree.children.filter((childRecord: RecordsEntity) => {
-            if (childRecord.isComment) {
-                childRecord = this.filterRecordDescendantsTreeForComments(childRecord);
+    private filterDescendantsTreeForCommentsTree(descendantsTree: RecordsEntity): RecordsEntity {
+        descendantsTree.children = descendantsTree.children.filter((child: RecordsEntity) => {
+            if (child.isComment) {
+                child = this.filterDescendantsTreeForCommentsTree(child);
 
                 return true;
             } else {
@@ -202,25 +202,63 @@ export class RecordsService {
             }
         });
 
-        return recordDescendantsTree;
+        return descendantsTree;
     }
 
-    public async removeRecord(record: RecordsEntity): Promise<RecordsEntity> {
-        if (!record) {
-            throw new NotFoundException({ message: 'record not found' });
+    public async removeTweet(tweet: RecordsEntity) {
+        if (!tweet) {
+            throw new NotFoundException({ message: 'tweet not found' });
         }
 
-        const recordImages = await this.imagesRepository
-            .createQueryBuilder('images')
-            .where(`images."recordId" = :recordId`, { recordId: record.id })
+        const tweetImages = await this.recordImagesRepository
+            .createQueryBuilder('record_images')
+            .where(`record_images."recordId" = :tweetId`, { tweetId: tweet.id })
             .getMany();
 
-        recordImages.forEach((recordImage: RecordImagesEntity) => {
+        tweetImages.forEach((recordImage: RecordImagesEntity) => {
             this.filesService.removeImageFile(recordImage.name);
         });
 
-        await this.imagesRepository.remove(recordImages);
+        await this.recordImagesRepository.remove(tweetImages);
 
-        return this.recordsTreeRepository.remove(record);
+        return this.recordsTreeRepository.remove(tweet);
+    }
+
+    public async removeComment(comment: RecordsEntity) {
+        if (!comment) {
+            throw new NotFoundException({ message: 'comment not found' });
+        }
+
+        const commentImages = await this.recordImagesRepository
+            .createQueryBuilder('record_images')
+            .where(`record_images."recordId" = :commentId`, { commentId: comment.id })
+            .getMany();
+
+        commentImages.forEach((recordImage: RecordImagesEntity) => {
+            this.filesService.removeImageFile(recordImage.name);
+        });
+
+        await this.recordImagesRepository.remove(commentImages);
+
+        return this.recordsTreeRepository.remove(comment);
+    }
+
+    public async removeRetweet(retweet: RecordsEntity) {
+        if (!retweet) {
+            throw new NotFoundException({ message: 'retweet not found' });
+        }
+
+        const retweetImages = await this.recordImagesRepository
+            .createQueryBuilder('record_images')
+            .where(`record_images."recordId" = :retweetId`, { retweetId: retweet.id })
+            .getMany();
+
+        retweetImages.forEach((recordImage: RecordImagesEntity) => {
+            this.filesService.removeImageFile(recordImage.name);
+        });
+
+        await this.recordImagesRepository.remove(retweetImages);
+
+        return this.recordsTreeRepository.remove(retweet);
     }
 }
