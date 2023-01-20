@@ -9,6 +9,7 @@ import * as path from 'path';
 import { MailerConfig } from 'mailer-config';
 import { TypeOrmConfig } from 'typeorm-config';
 
+import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
 import { FilesModule } from './files/files.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
@@ -39,6 +40,6 @@ import { UsersModule } from './users/users.module';
 })
 export class AppModule {
     public configure(consumer: MiddlewareConsumer) {
-        consumer.apply(AuthMiddleware).forRoutes(UsersController, RecordsController);
+        consumer.apply(AuthMiddleware).forRoutes(UsersController, RecordsController, AuthController);
     }
 }

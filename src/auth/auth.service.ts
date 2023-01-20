@@ -14,6 +14,7 @@ import * as bcryptjs from 'bcryptjs';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { SentMessageInfo } from 'nodemailer';
+import { async } from 'rxjs';
 import { Repository } from 'typeorm';
 import * as uuid from 'uuid';
 
@@ -135,6 +136,22 @@ export class AuthService {
         });
 
         return this.usersSessionsRepository.save(userSession);
+    }
+
+    public async getSessions(user: UsersEntity): Promise<SessionEntity[] | null> {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
+        const userSessions = await this.usersSessionsRepository.findBy({ user });
+
+        const sessions = Promise.all(
+            userSessions.map((userSession: UsersSessionsEntity): Promise<SessionEntity> => {
+                return this.cacheManager.get<SessionEntity>(userSession.sessionId);
+            }),
+        );
+
+        return sessions;
     }
 
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
