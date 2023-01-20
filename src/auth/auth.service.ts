@@ -24,8 +24,8 @@ import { UsersService } from 'src/users/users.service';
 
 import { SignInUserDto } from './dto/sign-in-user.dto';
 import { SignUpUserDto } from './dto/sign-up-user.dto';
-import { RefreshTokensSessionsEntity } from './refresh-tokens-sessions.entity';
 import { RefreshTokensEntity } from './refresh-tokens.entity';
+import { UsersSessionsEntity } from './users-sessions.entity';
 
 @Injectable()
 export class AuthService {
@@ -35,8 +35,8 @@ export class AuthService {
         private readonly configService: ConfigService,
         @InjectRepository(RefreshTokensEntity)
         private readonly refreshTokensRepository: Repository<RefreshTokensEntity>,
-        @InjectRepository(RefreshTokensSessionsEntity)
-        private readonly refreshTokensSessionsRepository: Repository<RefreshTokensSessionsEntity>,
+        @InjectRepository(UsersSessionsEntity)
+        private readonly usersSessionsRepository: Repository<UsersSessionsEntity>,
         private readonly mailerService: MailerService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
@@ -88,7 +88,7 @@ export class AuthService {
 
         const accessToken = this.generateAccessToken(user);
         const refreshToken = await this.generateRefreshToken(user);
-        const refreshTokenSession = await this.createUserSession(refreshToken, privacyInfo);
+        const userSession = await this.createUserSession(user, refreshToken, privacyInfo);
 
         await this.sendLoginNotificationEmail(dto.email, privacyInfo);
 
@@ -107,23 +107,34 @@ export class AuthService {
     }
 
     private async createUserSession(
+        user: UsersEntity,
         refreshToken: RefreshTokensEntity,
         privacyInfo: PrivacyInfo,
-    ): Promise<RefreshTokensSessionsEntity> {
+    ): Promise<UsersSessionsEntity> {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
+        if (!refreshToken) {
+            throw new NotFoundException({ message: 'refresh token not found' });
+        }
+
         const session: SessionEntity = {
             id: uuid.v4(),
             privacyInfo,
             loggedAt: new Date(),
         };
         const sessionLifetimeInSeconds = this.configService.get<number>('SESSION_LIFETIME_IN_SECONDS');
-        const refreshTokenSession = this.refreshTokensSessionsRepository.create({
-            sessionId: session.id,
-            refreshToken,
-        });
 
         await this.cacheManager.set(session.id, session, sessionLifetimeInSeconds);
 
-        return this.refreshTokensSessionsRepository.save(refreshTokenSession);
+        const userSession = this.usersSessionsRepository.create({
+            sessionId: session.id,
+            user,
+            refreshToken,
+        });
+
+        return this.usersSessionsRepository.save(userSession);
     }
 
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
@@ -218,7 +229,6 @@ export class AuthService {
         });
         const refreshToken = this.refreshTokensRepository.create({
             value: refreshTokenValue,
-            user,
         });
 
         return this.refreshTokensRepository.save(refreshToken);
