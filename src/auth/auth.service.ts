@@ -145,13 +145,19 @@ export class AuthService {
 
         const userSessions = await this.usersSessionsRepository.findBy({ user });
 
-        const sessions = Promise.all(
+        const sessions = await Promise.all(
             userSessions.map((userSession: UsersSessionsEntity): Promise<SessionEntity> => {
                 return this.cacheManager.get<SessionEntity>(userSession.sessionId);
             }),
         );
 
         return sessions;
+    }
+
+    private sortSessionsByLoggedAt(sessions: SessionEntity[]): SessionEntity[] {
+        return sessions.sort((sessionA: SessionEntity, sessionB: SessionEntity): number => {
+            return new Date(sessionA.loggedAt).getTime() - new Date(sessionB.loggedAt).getTime();
+        });
     }
 
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
