@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards, UsePipes } from '@nestjs/common';
 
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { PrivacyInfoDecorator } from 'src/decorators/privacy-info.decorator';
@@ -46,8 +46,8 @@ export class AuthController {
     }
 
     @UseGuards(AuthGuard)
-    @Get('/sessions')
-    public getUserSessions(@CurrentUserDecorator() currentUser: UsersEntity) {
-        return this.authService.getUserSessions(currentUser);
+    @Get('/sessions/all')
+    public getAllUserSessions(@CurrentUserDecorator() currentUser: UsersEntity) {
+        return this.authService.getAllUserSessions(currentUser);
     }
 }

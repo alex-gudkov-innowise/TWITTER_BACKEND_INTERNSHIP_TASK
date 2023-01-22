@@ -105,7 +105,7 @@ export class AuthService {
     public async signOutUser(refreshTokenValue: string): Promise<RefreshTokensEntity> {
         const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
 
-        // remove session...
+        await this.cacheManager.del(refreshToken.sessionId);
 
         return this.refreshTokensRepository.remove(refreshToken);
     }
@@ -128,7 +128,7 @@ export class AuthService {
         return userSession;
     }
 
-    public async getUserSessions(user: UsersEntity): Promise<UserSessionEntity[] | null> {
+    public async getAllUserSessions(user: UsersEntity): Promise<UserSessionEntity[] | null> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
@@ -142,6 +142,10 @@ export class AuthService {
         );
 
         return userSessions;
+    }
+
+    public getSessionById(sessionId: string) {
+        return this.cacheManager.get<UserSessionEntity>(sessionId);
     }
 
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
