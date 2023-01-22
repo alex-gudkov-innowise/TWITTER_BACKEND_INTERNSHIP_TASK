@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class intToUuid1674070066593 implements MigrationInterface {
-    name = 'intToUuid1674070066593';
+export class IntToUuid1674070066593 implements MigrationInterface {
+    name = 'IntToUuid1674070066593';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`

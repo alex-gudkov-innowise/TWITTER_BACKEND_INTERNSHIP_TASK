@@ -7,7 +7,7 @@ export class RefreshTokensEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ type: 'uuid', nullable: true })
+    @Column({ type: 'uuid', nullable: false, unique: true })
     value: string;
 
     @ManyToOne(() => UsersEntity, (user: UsersEntity) => user.refreshTokens, {
@@ -16,6 +16,6 @@ export class RefreshTokensEntity {
     @JoinColumn({ name: 'userId' })
     user: UsersEntity;
 
-    @Column({ type: 'uuid', nullable: true })
+    @Column({ type: 'uuid', nullable: false, unique: true })
     sessionId: string;
 }
