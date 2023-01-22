@@ -144,6 +144,22 @@ export class AuthService {
         return userSessions;
     }
 
+    public async deleteAllUserSessions(user: UsersEntity): Promise<void> {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
+        const usersRefreshTokens = await this.refreshTokensRepository.findBy({ user });
+
+        await Promise.all(
+            usersRefreshTokens.map(async (refreshToken: RefreshTokensEntity): Promise<void> => {
+                const userSession = await this.getSessionById(refreshToken.sessionId);
+
+                await this.deleteSession(userSession);
+            }),
+        );
+    }
+
     public getSessionById(sessionId: string) {
         return this.cacheManager.get<UserSessionEntity>(sessionId);
     }

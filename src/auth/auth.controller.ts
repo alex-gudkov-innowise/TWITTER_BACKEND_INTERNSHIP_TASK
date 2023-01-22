@@ -58,4 +58,10 @@ export class AuthController {
 
         return this.authService.deleteSession(session);
     }
+
+    @UseGuards(AuthGuard)
+    @Delete('/sessions/all')
+    public deleteAllUserSession(@CurrentUserDecorator() currentUser: UsersEntity) {
+        return this.authService.deleteAllUserSessions(currentUser);
+    }
 }
