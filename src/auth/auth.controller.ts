@@ -23,8 +23,11 @@ export class AuthController {
     }
 
     @Post('/confirm-email')
-    public confirmEmail(@Query('verificationCode') verificationCode: string) {
-        return this.authService.confirmEmail(verificationCode);
+    public confirmEmail(
+        @Query('verificationCode') verificationCode: string,
+        @PrivacyInfoDecorator() privacyInfo: PrivacyInfo,
+    ) {
+        return this.authService.confirmEmail(verificationCode, privacyInfo);
     }
 
     @Post('/sign-in')

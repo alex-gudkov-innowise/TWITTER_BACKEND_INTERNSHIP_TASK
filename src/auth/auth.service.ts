@@ -14,19 +14,17 @@ import * as bcryptjs from 'bcryptjs';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { SentMessageInfo } from 'nodemailer';
-import { async } from 'rxjs';
 import { Repository } from 'typeorm';
 import * as uuid from 'uuid';
 
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
-import { SessionEntity } from 'src/interfaces/session-entity.interface';
+import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
 import { UsersEntity } from 'src/users/users.entity';
 import { UsersService } from 'src/users/users.service';
 
 import { SignInUserDto } from './dto/sign-in-user.dto';
 import { SignUpUserDto } from './dto/sign-up-user.dto';
 import { RefreshTokensEntity } from './refresh-tokens.entity';
-import { UsersSessionsEntity } from './users-sessions.entity';
 
 @Injectable()
 export class AuthService {
@@ -36,8 +34,6 @@ export class AuthService {
         private readonly configService: ConfigService,
         @InjectRepository(RefreshTokensEntity)
         private readonly refreshTokensRepository: Repository<RefreshTokensEntity>,
-        @InjectRepository(UsersSessionsEntity)
-        private readonly usersSessionsRepository: Repository<UsersSessionsEntity>,
         private readonly mailerService: MailerService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
@@ -54,13 +50,14 @@ export class AuthService {
         return this.sendConfirmationEmail(dto.email, verificationCode);
     }
 
-    public async confirmEmail(verificationCode: string) {
+    public async confirmEmail(verificationCode: string, privacyInfo: PrivacyInfo) {
         const dto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
-        await this.cacheManager.del(verificationCode);
 
         if (!dto) {
             throw new BadRequestException({ message: 'invalid verification code' });
         }
+
+        await this.cacheManager.del(verificationCode);
 
         const hashedPassword = await bcryptjs.hash(dto.password, 4);
         const user = await this.usersService.createUser({
@@ -68,11 +65,15 @@ export class AuthService {
             password: hashedPassword,
         });
 
-        // create session...
+        const accessToken = this.createAccessToken(user);
+        const userSession = await this.createUserSession(user, privacyInfo);
+        const refreshToken = await this.createRefreshToken(user, userSession);
+
+        // delete extra sessions...
 
         return {
-            accessToken: this.generateAccessToken(user),
-            refreshToken: await this.generateRefreshToken(user),
+            accessToken,
+            refreshToken: refreshToken.value,
         };
     }
 
@@ -87,11 +88,11 @@ export class AuthService {
             throw new UnauthorizedException({ message: 'wrong password' });
         }
 
-        const accessToken = this.generateAccessToken(user);
-        const refreshToken = await this.generateRefreshToken(user);
-        const userSession = await this.createUserSession(user, refreshToken, privacyInfo);
+        const accessToken = this.createAccessToken(user);
+        const userSession = await this.createUserSession(user, privacyInfo);
+        const refreshToken = await this.createRefreshToken(user, userSession);
 
-        this.deleteExtraUserSessions(user);
+        // delete extra sessions...
 
         await this.sendLoginNotificationEmail(dto.email, privacyInfo);
 
@@ -109,76 +110,38 @@ export class AuthService {
         return this.refreshTokensRepository.remove(refreshToken);
     }
 
-    private async createUserSession(
-        user: UsersEntity,
-        refreshToken: RefreshTokensEntity,
-        privacyInfo: PrivacyInfo,
-    ): Promise<UsersSessionsEntity> {
+    private async createUserSession(user: UsersEntity, privacyInfo: PrivacyInfo): Promise<UserSessionEntity> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
 
-        if (!refreshToken) {
-            throw new NotFoundException({ message: 'refresh token not found' });
-        }
-
-        const session: SessionEntity = {
+        const userSession: UserSessionEntity = {
             id: uuid.v4(),
+            userId: user.id,
             privacyInfo,
             loggedAt: new Date(),
         };
         const sessionLifetimeInSeconds = this.configService.get<number>('SESSION_LIFETIME_IN_SECONDS');
 
-        await this.cacheManager.set(session.id, session, sessionLifetimeInSeconds);
+        await this.cacheManager.set(userSession.id, userSession, sessionLifetimeInSeconds);
 
-        const userSession = this.usersSessionsRepository.create({
-            sessionId: session.id,
-            user,
-            refreshToken,
-        });
-
-        return this.usersSessionsRepository.save(userSession);
+        return userSession;
     }
 
-    public async getUserSessions(user: UsersEntity): Promise<SessionEntity[] | null> {
+    public async getUserSessions(user: UsersEntity): Promise<UserSessionEntity[] | null> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
 
-        const usersSessionsEntity = await this.usersSessionsRepository.findBy({ user });
+        const usersRefreshTokens = await this.refreshTokensRepository.findBy({ user });
 
         const userSessions = await Promise.all(
-            usersSessionsEntity.map((userSessionEntity: UsersSessionsEntity): Promise<SessionEntity> => {
-                return this.cacheManager.get<SessionEntity>(userSessionEntity.sessionId);
+            usersRefreshTokens.map((refreshToken: RefreshTokensEntity): Promise<UserSessionEntity> => {
+                return this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
             }),
         );
 
         return userSessions;
-    }
-
-    private sortSessionsByLoggedAt(sessions: SessionEntity[]): SessionEntity[] {
-        return sessions.sort((sessionA: SessionEntity, sessionB: SessionEntity): number => {
-            return new Date(sessionA.loggedAt).getTime() - new Date(sessionB.loggedAt).getTime();
-        });
-    }
-
-    public async deleteAllUserSessions(user: UsersEntity) {
-        const userSessionsToDelete = await this.getUserSessions(user);
-
-        userSessionsToDelete.map((session: SessionEntity) => this.deleteSession(session));
-    }
-
-    private async deleteExtraUserSessions(user: UsersEntity) {
-        const sortedUserSession = this.sortSessionsByLoggedAt(await this.getUserSessions(user));
-        const maxSessionsCount = this.configService.get<number>('MAX_SESSIONS_COUNT');
-        const userSessionsToDelete = sortedUserSession.splice(maxSessionsCount);
-
-        userSessionsToDelete.map((session: SessionEntity) => this.deleteSession(session));
-    }
-
-    public async deleteSession(session: SessionEntity) {
-        await this.cacheManager.del(session.id);
-        await this.usersSessionsRepository.delete({ sessionId: session.id });
     }
 
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
@@ -243,7 +206,7 @@ export class AuthService {
         });
     }
 
-    private generateAccessToken(user: UsersEntity): string {
+    private createAccessToken(user: UsersEntity): string {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
@@ -259,37 +222,36 @@ export class AuthService {
         return accessToken;
     }
 
-    private generateRefreshToken(user: UsersEntity): Promise<RefreshTokensEntity> {
+    private createRefreshToken(user: UsersEntity, userSession: UserSessionEntity): Promise<RefreshTokensEntity> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
 
-        const payload = {
-            userId: user.id,
-        };
-        const refreshTokenValue = this.jwtService.sign(payload, {
-            secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-            expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN'),
-        });
+        if (!userSession) {
+            throw new NotFoundException({ message: 'user session not found' });
+        }
+
         const refreshToken = this.refreshTokensRepository.create({
-            value: refreshTokenValue,
+            value: uuid.v4(),
+            user,
+            sessionId: userSession.id,
         });
 
         return this.refreshTokensRepository.save(refreshToken);
     }
 
     public async getNewAccessToken(refreshTokenValue: string) {
-        try {
-            const payload = this.jwtService.verify(refreshTokenValue, {
-                secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-            });
+        const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
+        const userSession = await this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
 
-            return {
-                accessToken: this.generateAccessToken(payload.userId),
-            };
-        } catch (error) {
-            await this.refreshTokensRepository.delete({ value: refreshTokenValue });
-            throw new UnauthorizedException({ message: 'refresh token is expired' });
+        if (!userSession) {
+            throw new NotFoundException({ message: 'user session not found' });
         }
+
+        const user = await this.usersService.getUserById(userSession.userId);
+
+        return {
+            accessToken: this.createAccessToken(user),
+        };
     }
 }
