@@ -148,6 +148,13 @@ export class AuthService {
         return this.cacheManager.get<UserSessionEntity>(sessionId);
     }
 
+    public async deleteSession(session: UserSessionEntity): Promise<UserSessionEntity> {
+        await this.cacheManager.del(session.id);
+        await this.refreshTokensRepository.delete({ sessionId: session.id });
+
+        return session;
+    }
+
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
         return this.mailerService.sendMail({
             to: userEmail,

@@ -50,4 +50,12 @@ export class AuthController {
     public getAllUserSessions(@CurrentUserDecorator() currentUser: UsersEntity) {
         return this.authService.getAllUserSessions(currentUser);
     }
+
+    @UseGuards(AuthGuard)
+    @Delete('/sessions/:sessionId')
+    public async deleteSession(@Param('sessionId') sessionId: string) {
+        const session = await this.authService.getSessionById(sessionId);
+
+        return this.authService.deleteSession(session);
+    }
 }
