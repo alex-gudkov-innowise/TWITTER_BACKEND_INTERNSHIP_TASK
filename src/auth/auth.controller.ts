@@ -44,7 +44,7 @@ export class AuthController {
 
     @UseGuards(AuthGuard)
     @Get('/sessions')
-    public getSessions(@CurrentUserDecorator() currentUser: UsersEntity) {
-        return this.authService.getSessions(currentUser);
+    public getUserSessions(@CurrentUserDecorator() currentUser: UsersEntity) {
+        return this.authService.getUserSessions(currentUser);
     }
 }

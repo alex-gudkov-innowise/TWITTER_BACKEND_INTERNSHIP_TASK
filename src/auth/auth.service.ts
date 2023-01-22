@@ -91,6 +91,8 @@ export class AuthService {
         const refreshToken = await this.generateRefreshToken(user);
         const userSession = await this.createUserSession(user, refreshToken, privacyInfo);
 
+        this.deleteExtraUserSessions(user);
+
         await this.sendLoginNotificationEmail(dto.email, privacyInfo);
 
         return {
@@ -138,26 +140,45 @@ export class AuthService {
         return this.usersSessionsRepository.save(userSession);
     }
 
-    public async getSessions(user: UsersEntity): Promise<SessionEntity[] | null> {
+    public async getUserSessions(user: UsersEntity): Promise<SessionEntity[] | null> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
 
-        const userSessions = await this.usersSessionsRepository.findBy({ user });
+        const usersSessionsEntity = await this.usersSessionsRepository.findBy({ user });
 
-        const sessions = await Promise.all(
-            userSessions.map((userSession: UsersSessionsEntity): Promise<SessionEntity> => {
-                return this.cacheManager.get<SessionEntity>(userSession.sessionId);
+        const userSessions = await Promise.all(
+            usersSessionsEntity.map((userSessionEntity: UsersSessionsEntity): Promise<SessionEntity> => {
+                return this.cacheManager.get<SessionEntity>(userSessionEntity.sessionId);
             }),
         );
 
-        return sessions;
+        return userSessions;
     }
 
     private sortSessionsByLoggedAt(sessions: SessionEntity[]): SessionEntity[] {
         return sessions.sort((sessionA: SessionEntity, sessionB: SessionEntity): number => {
             return new Date(sessionA.loggedAt).getTime() - new Date(sessionB.loggedAt).getTime();
         });
+    }
+
+    public async deleteAllUserSessions(user: UsersEntity) {
+        const userSessionsToDelete = await this.getUserSessions(user);
+
+        userSessionsToDelete.map((session: SessionEntity) => this.deleteSession(session));
+    }
+
+    private async deleteExtraUserSessions(user: UsersEntity) {
+        const sortedUserSession = this.sortSessionsByLoggedAt(await this.getUserSessions(user));
+        const maxSessionsCount = this.configService.get<number>('MAX_SESSIONS_COUNT');
+        const userSessionsToDelete = sortedUserSession.splice(maxSessionsCount);
+
+        userSessionsToDelete.map((session: SessionEntity) => this.deleteSession(session));
+    }
+
+    public async deleteSession(session: SessionEntity) {
+        await this.cacheManager.del(session.id);
+        await this.usersSessionsRepository.delete({ sessionId: session.id });
     }
 
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
