@@ -69,7 +69,7 @@ export class AuthService {
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
 
-        // delete extra sessions...
+        await this.deleteExtraUserSessions(user);
 
         return {
             accessToken,
@@ -92,7 +92,7 @@ export class AuthService {
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
 
-        // delete extra sessions...
+        await this.deleteExtraUserSessions(user);
 
         await this.sendLoginNotificationEmail(dto.email, privacyInfo);
 
@@ -142,6 +142,24 @@ export class AuthService {
         );
 
         return userSessions;
+    }
+
+    private sortSessionsByLoggedAtDesc(sessions: UserSessionEntity[]): UserSessionEntity[] {
+        return sessions.sort((sessionA: UserSessionEntity, sessionB: UserSessionEntity): number => {
+            return new Date(sessionB.loggedAt).getTime() - new Date(sessionA.loggedAt).getTime();
+        });
+    }
+
+    private async deleteExtraUserSessions(user: UsersEntity) {
+        const sortedUserSession = this.sortSessionsByLoggedAtDesc(await this.getAllUserSessions(user));
+        const maxSessionsCount = this.configService.get<number>('MAX_SESSIONS_COUNT');
+        const userSessionsToDelete = sortedUserSession.splice(maxSessionsCount);
+
+        await Promise.all(
+            userSessionsToDelete.map(async (session: UserSessionEntity): Promise<void> => {
+                await this.deleteSession(session);
+            }),
+        );
     }
 
     public async deleteAllUserSessions(user: UsersEntity): Promise<void> {
@@ -269,6 +287,10 @@ export class AuthService {
 
     public async getNewAccessToken(refreshTokenValue: string) {
         const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
+        if (!refreshToken) {
+            throw new UnauthorizedException({ message: 'invalid refresh token' });
+        }
+
         const userSession = await this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
 
         if (!userSession) {
