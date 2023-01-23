@@ -15,8 +15,11 @@ import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { SentMessageInfo } from 'nodemailer';
 import { Repository } from 'typeorm';
+import * as uuid from 'uuid';
 
-import { PrivacyInfo } from 'src/decorators/privacy-info.decorator';
+import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
+import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
+import { UsersEntity } from 'src/users/users.entity';
 import { UsersService } from 'src/users/users.service';
 
 import { SignInUserDto } from './dto/sign-in-user.dto';
@@ -47,13 +50,14 @@ export class AuthService {
         return this.sendConfirmationEmail(dto.email, verificationCode);
     }
 
-    public async confirmEmail(verificationCode: string) {
+    public async confirmEmail(verificationCode: string, privacyInfo: PrivacyInfo) {
         const dto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
-        await this.cacheManager.del(verificationCode);
 
         if (!dto) {
             throw new BadRequestException({ message: 'invalid verification code' });
         }
+
+        await this.cacheManager.del(verificationCode);
 
         const hashedPassword = await bcryptjs.hash(dto.password, 4);
         const user = await this.usersService.createUser({
@@ -61,9 +65,15 @@ export class AuthService {
             password: hashedPassword,
         });
 
+        const accessToken = this.createAccessToken(user);
+        const userSession = await this.createUserSession(user, privacyInfo);
+        const refreshToken = await this.createRefreshToken(user, userSession);
+
+        await this.deleteExtraUserSessions(user);
+
         return {
-            accessToken: this.generateAccessToken(user.id),
-            refreshToken: await this.generateRefreshToken(user.id),
+            accessToken,
+            refreshToken: refreshToken.value,
         };
     }
 
@@ -78,18 +88,105 @@ export class AuthService {
             throw new UnauthorizedException({ message: 'wrong password' });
         }
 
+        const accessToken = this.createAccessToken(user);
+        const userSession = await this.createUserSession(user, privacyInfo);
+        const refreshToken = await this.createRefreshToken(user, userSession);
+
+        await this.deleteExtraUserSessions(user);
+
         await this.sendLoginNotificationEmail(dto.email, privacyInfo);
 
         return {
-            accessToken: this.generateAccessToken(user.id),
-            refreshToken: await this.generateRefreshToken(user.id),
+            accessToken,
+            refreshToken: refreshToken.value,
         };
     }
 
     public async signOutUser(refreshTokenValue: string): Promise<RefreshTokensEntity> {
         const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
 
+        await this.cacheManager.del(refreshToken.sessionId);
+
         return this.refreshTokensRepository.remove(refreshToken);
+    }
+
+    private async createUserSession(user: UsersEntity, privacyInfo: PrivacyInfo): Promise<UserSessionEntity> {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
+        const userSession: UserSessionEntity = {
+            id: uuid.v4(),
+            userId: user.id,
+            privacyInfo,
+            loggedAt: new Date(),
+        };
+        const sessionLifetimeInSeconds = this.configService.get<number>('SESSION_LIFETIME_IN_SECONDS');
+
+        await this.cacheManager.set(userSession.id, userSession, sessionLifetimeInSeconds);
+
+        return userSession;
+    }
+
+    public async getAllUserSessions(user: UsersEntity): Promise<UserSessionEntity[] | null> {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
+        const usersRefreshTokens = await this.refreshTokensRepository.findBy({ user });
+
+        const userSessions = await Promise.all(
+            usersRefreshTokens.map((refreshToken: RefreshTokensEntity): Promise<UserSessionEntity> => {
+                return this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
+            }),
+        );
+
+        return userSessions;
+    }
+
+    private sortSessionsByLoggedAtDesc(sessions: UserSessionEntity[]): UserSessionEntity[] {
+        return sessions.sort((sessionA: UserSessionEntity, sessionB: UserSessionEntity): number => {
+            return new Date(sessionB.loggedAt).getTime() - new Date(sessionA.loggedAt).getTime();
+        });
+    }
+
+    private async deleteExtraUserSessions(user: UsersEntity) {
+        const sortedUserSession = this.sortSessionsByLoggedAtDesc(await this.getAllUserSessions(user));
+        const maxSessionsCount = this.configService.get<number>('MAX_SESSIONS_COUNT');
+        const userSessionsToDelete = sortedUserSession.splice(maxSessionsCount);
+
+        await Promise.all(
+            userSessionsToDelete.map(async (session: UserSessionEntity): Promise<void> => {
+                await this.deleteSession(session);
+            }),
+        );
+    }
+
+    public async deleteAllUserSessions(user: UsersEntity): Promise<void> {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
+        const usersRefreshTokens = await this.refreshTokensRepository.findBy({ user });
+
+        await Promise.all(
+            usersRefreshTokens.map(async (refreshToken: RefreshTokensEntity): Promise<void> => {
+                const userSession = await this.getSessionById(refreshToken.sessionId);
+
+                await this.deleteSession(userSession);
+            }),
+        );
+    }
+
+    public getSessionById(sessionId: string) {
+        return this.cacheManager.get<UserSessionEntity>(sessionId);
+    }
+
+    public async deleteSession(session: UserSessionEntity): Promise<UserSessionEntity> {
+        await this.cacheManager.del(session.id);
+        await this.refreshTokensRepository.delete({ sessionId: session.id });
+
+        return session;
     }
 
     private sendLoginNotificationEmail(userEmail: string, privacyInfo: PrivacyInfo): Promise<SentMessageInfo> {
@@ -154,9 +251,13 @@ export class AuthService {
         });
     }
 
-    private generateAccessToken(userId: string) {
+    private createAccessToken(user: UsersEntity): string {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
+
         const payload = {
-            userId,
+            userId: user.id,
         };
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
@@ -166,37 +267,40 @@ export class AuthService {
         return accessToken;
     }
 
-    private async generateRefreshToken(userId: string) {
-        const payload = {
-            userId,
-        };
-        const refreshTokenValue = this.jwtService.sign(payload, {
-            secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-            expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN'),
-        });
+    private createRefreshToken(user: UsersEntity, userSession: UserSessionEntity): Promise<RefreshTokensEntity> {
+        if (!user) {
+            throw new NotFoundException({ message: 'user not found' });
+        }
 
-        const user = await this.usersService.getUserById(userId);
+        if (!userSession) {
+            throw new NotFoundException({ message: 'user session not found' });
+        }
+
         const refreshToken = this.refreshTokensRepository.create({
-            value: refreshTokenValue,
+            value: uuid.v4(),
             user,
+            sessionId: userSession.id,
         });
-        await this.refreshTokensRepository.save(refreshToken);
 
-        return refreshTokenValue;
+        return this.refreshTokensRepository.save(refreshToken);
     }
 
     public async getNewAccessToken(refreshTokenValue: string) {
-        try {
-            const payload = this.jwtService.verify(refreshTokenValue, {
-                secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-            });
-
-            return {
-                accessToken: this.generateAccessToken(payload.userId),
-            };
-        } catch (error) {
-            await this.refreshTokensRepository.delete({ value: refreshTokenValue });
-            throw new UnauthorizedException({ message: 'refresh token is expired' });
+        const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
+        if (!refreshToken) {
+            throw new UnauthorizedException({ message: 'invalid refresh token' });
         }
+
+        const userSession = await this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
+
+        if (!userSession) {
+            throw new NotFoundException({ message: 'user session not found' });
+        }
+
+        const user = await this.usersService.getUserById(userSession.userId);
+
+        return {
+            accessToken: this.createAccessToken(user),
+        };
     }
 }

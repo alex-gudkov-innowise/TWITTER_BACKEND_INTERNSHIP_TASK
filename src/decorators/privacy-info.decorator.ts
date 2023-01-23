@@ -1,10 +1,7 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
 
-export interface PrivacyInfo {
-    ipAddress: string;
-    userAgent: string;
-}
+import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 
 export const PrivacyInfoDecorator = createParamDecorator(function (
     data: unknown,

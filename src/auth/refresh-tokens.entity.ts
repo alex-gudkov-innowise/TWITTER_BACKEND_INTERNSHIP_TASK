@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 import { UsersEntity } from 'src/users/users.entity';
 
@@ -7,11 +7,15 @@ export class RefreshTokensEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ unique: true, nullable: false })
+    @Column({ type: 'uuid', nullable: false, unique: true })
     value: string;
 
-    @ManyToOne(() => UsersEntity, (user: UsersEntity) => user.id, {
+    @ManyToOne(() => UsersEntity, (user: UsersEntity) => user.refreshTokens, {
         onDelete: 'CASCADE',
     })
+    @JoinColumn({ name: 'userId' })
     user: UsersEntity;
+
+    @Column({ type: 'uuid', nullable: false, unique: true })
+    sessionId: string;
 }
