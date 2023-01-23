@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 
-import { UsersEntity } from 'src/users/users.entity';
+import { UsersEntity } from 'src/users/entities/users.entity';
 
 @Entity({ name: 'refresh_tokens' })
 export class RefreshTokensEntity {

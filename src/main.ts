@@ -16,7 +16,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-
-export function findSmallestInt(arr: number[]): number {
-    return Math.min(...arr);
-}

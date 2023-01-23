@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TreeRepository } from 'typeorm';
 
-import { RecordsEntity } from './records.entity';
+import { RecordsEntity } from '../entities/records.entity';
 
 @Injectable()
 export class RecordsService {

@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
-import { RefreshTokensEntity } from 'src/auth/refresh-tokens.entity';
+import { RefreshTokensEntity } from 'src/auth/entities/refresh-tokens.entity';
 
 @Entity({ name: 'users' })
 export class UsersEntity {

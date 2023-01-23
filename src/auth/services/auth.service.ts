@@ -19,12 +19,13 @@ import * as uuid from 'uuid';
 
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
-import { UsersEntity } from 'src/users/users.entity';
-import { UsersService } from 'src/users/users.service';
+import { UsersEntity } from 'src/users/entities/users.entity';
+import { UsersService } from 'src/users/services/users.service';
 
-import { SignInUserDto } from './dto/sign-in-user.dto';
-import { SignUpUserDto } from './dto/sign-up-user.dto';
-import { RefreshTokensEntity } from './refresh-tokens.entity';
+import { SignInUserDto } from '../dtos/sign-in-user.dto';
+import { SignUpUserDto } from '../dtos/sign-up-user.dto';
+import { TokensPairDto } from '../dtos/tokens-pair.dto';
+import { RefreshTokensEntity } from '../entities/refresh-tokens.entity';
 
 @Injectable()
 export class AuthService {
@@ -50,7 +51,7 @@ export class AuthService {
         return this.sendConfirmationEmail(signUpUserDto.email, verificationCode);
     }
 
-    public async confirmEmail(verificationCode: string, privacyInfo: PrivacyInfo) {
+    public async confirmEmail(verificationCode: string, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
         const signUpUserDto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
 
         if (!signUpUserDto) {
@@ -77,7 +78,7 @@ export class AuthService {
         };
     }
 
-    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo) {
+    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
         const user = await this.usersService.getUserByEmail(signInUserDto.email);
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
@@ -128,20 +129,31 @@ export class AuthService {
         return userSession;
     }
 
-    public async getAllUserSessions(user: UsersEntity): Promise<UserSessionEntity[] | null> {
+    public async getAllUserSessions(user: UsersEntity): Promise<UserSessionEntity[]> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
 
         const usersRefreshTokens = await this.refreshTokensRepository.findBy({ user });
+        const userSessions = this.filterRefreshTokensForSessions(usersRefreshTokens);
 
-        const userSessions = await Promise.all(
-            usersRefreshTokens.map((refreshToken: RefreshTokensEntity): Promise<UserSessionEntity> => {
-                return this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
+        return userSessions;
+    }
+
+    private async filterRefreshTokensForSessions(refreshTokens: RefreshTokensEntity[]): Promise<UserSessionEntity[]> {
+        const sessions = await Promise.all(
+            refreshTokens.map(async (refreshToken: RefreshTokensEntity): Promise<UserSessionEntity> => {
+                const session = await this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
+
+                if (!session) {
+                    await this.refreshTokensRepository.delete(refreshToken);
+                }
+
+                return session;
             }),
         );
 
-        return userSessions;
+        return sessions.filter((sessions) => Boolean(sessions));
     }
 
     private sortSessionsByLoggedAtDesc(sessions: UserSessionEntity[]): UserSessionEntity[] {
@@ -150,10 +162,16 @@ export class AuthService {
         });
     }
 
-    private async deleteExtraUserSessions(user: UsersEntity) {
-        const sortedUserSession = this.sortSessionsByLoggedAtDesc(await this.getAllUserSessions(user));
+    private async getExtraUserSessions(user: UsersEntity): Promise<UserSessionEntity[]> {
+        const allUserSessions = await this.getAllUserSessions(user);
+        const sortedUserSession = this.sortSessionsByLoggedAtDesc(allUserSessions);
         const maxSessionsCount = this.configService.get<number>('MAX_SESSIONS_COUNT');
-        const userSessionsToDelete = sortedUserSession.splice(maxSessionsCount);
+
+        return sortedUserSession.splice(maxSessionsCount);
+    }
+
+    private async deleteExtraUserSessions(user: UsersEntity): Promise<void> {
+        const userSessionsToDelete = await this.getExtraUserSessions(user);
 
         await Promise.all(
             userSessionsToDelete.map(async (session: UserSessionEntity): Promise<void> => {
@@ -178,7 +196,7 @@ export class AuthService {
         );
     }
 
-    public getSessionById(sessionId: string) {
+    public getSessionById(sessionId: string): Promise<UserSessionEntity> {
         return this.cacheManager.get<UserSessionEntity>(sessionId);
     }
 
@@ -259,10 +277,7 @@ export class AuthService {
         const payload = {
             userId: user.id,
         };
-        const accessToken = this.jwtService.sign(payload, {
-            secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-            expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRES_IN'),
-        });
+        const accessToken = this.jwtService.sign(payload);
 
         return accessToken;
     }

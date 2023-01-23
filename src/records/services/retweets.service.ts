@@ -3,11 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
-import { UsersEntity } from 'src/users/users.entity';
+import { UsersEntity } from 'src/users/entities/users.entity';
 
-import { CreateRetweetDto } from './dto/create-retweet.dto';
-import { RecordImagesEntity } from './record-images.entity';
-import { RecordsEntity } from './records.entity';
+import { RecordImagesEntity } from '../entities/record-images.entity';
+import { RecordsEntity } from '../entities/records.entity';
+import { CreateRetweetDto } from '../dtos/create-retweet.dto';
 
 @Injectable()
 export class RetweetsService {

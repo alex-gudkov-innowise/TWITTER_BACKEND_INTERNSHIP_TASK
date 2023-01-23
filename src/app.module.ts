@@ -4,18 +4,21 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import * as path from 'path';
 
+import { JwtConfig } from 'jwt-config';
 import { MailerConfig } from 'mailer-config';
+import { ServeStaticConfig } from 'serve-static-config';
 import { TypeOrmConfig } from 'typeorm-config';
 
-import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
+import { AuthController } from './auth/controllers/auth.controller';
 import { FilesModule } from './files/files.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
-import { RecordsController } from './records/records.controller';
+import { CommentsController } from './records/controllers/comments.controller';
+import { RetweetsController } from './records/controllers/retweets.controller';
+import { TweetsController } from './records/controllers/tweets.controller';
 import { RecordsModule } from './records/records.module';
-import { UsersController } from './users/users.controller';
+import { UsersController } from './users/controllers/users.controller';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -28,10 +31,8 @@ import { UsersModule } from './users/users.module';
         }),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfig }),
         MailerModule.forRootAsync({ useClass: MailerConfig }),
-        JwtModule.register({}),
-        ServeStaticModule.forRoot({
-            rootPath: path.join(__dirname, '..', 'static'),
-        }),
+        ServeStaticModule.forRootAsync({ useClass: ServeStaticConfig }),
+        JwtModule.registerAsync({ useClass: JwtConfig }),
         UsersModule,
         AuthModule,
         RecordsModule,
@@ -40,6 +41,8 @@ import { UsersModule } from './users/users.module';
 })
 export class AppModule {
     public configure(consumer: MiddlewareConsumer) {
-        consumer.apply(AuthMiddleware).forRoutes(UsersController, RecordsController, AuthController);
+        consumer
+            .apply(AuthMiddleware)
+            .forRoutes(UsersController, AuthController, TweetsController, CommentsController, RetweetsController);
     }
 }
