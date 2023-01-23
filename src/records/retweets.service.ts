@@ -5,7 +5,7 @@ import { Repository, TreeRepository } from 'typeorm';
 import { FilesService } from 'src/files/files.service';
 import { UsersEntity } from 'src/users/users.entity';
 
-import { CreateRecordDto } from './dto/create-record.dto';
+import { CreateRetweetDto } from './dto/create-retweet.dto';
 import { RecordImagesEntity } from './record-images.entity';
 import { RecordsEntity } from './records.entity';
 
@@ -17,7 +17,7 @@ export class RetweetsService {
         private readonly filesService: FilesService,
     ) {}
 
-    public getUserRetweets(user: UsersEntity): Promise<RecordsEntity[] | null> {
+    public getUserRetweets(user: UsersEntity): Promise<RecordsEntity[]> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
@@ -47,8 +47,8 @@ export class RetweetsService {
         });
     }
 
-    public async createRetweet(
-        dto: CreateRecordDto,
+    public async createRetweetOnRecord(
+        createRetweetDto: CreateRetweetDto,
         author: UsersEntity,
         record: RecordsEntity,
         imageFiles: Array<Express.Multer.File> = [],
@@ -58,7 +58,7 @@ export class RetweetsService {
         }
 
         const retweet = this.recordsTreeRepository.create({
-            text: dto.text,
+            text: createRetweetDto.text,
             isComment: false,
             isRetweet: true,
             author,

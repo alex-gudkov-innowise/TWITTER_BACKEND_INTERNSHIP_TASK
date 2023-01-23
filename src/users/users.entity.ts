@@ -13,6 +13,6 @@ export class UsersEntity {
     @Column({ nullable: false })
     password: string;
 
-    @OneToMany(() => RefreshTokensEntity, (refreshToken: RefreshTokensEntity) => refreshToken.value)
+    @OneToMany(() => RefreshTokensEntity, (refreshToken: RefreshTokensEntity) => refreshToken.user)
     refreshTokens: RefreshTokensEntity[];
 }
