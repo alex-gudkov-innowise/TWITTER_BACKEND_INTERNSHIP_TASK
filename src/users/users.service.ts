@@ -9,29 +9,21 @@ import { UsersEntity } from './users.entity';
 export class UsersService {
     constructor(@InjectRepository(UsersEntity) private readonly usersRepository: Repository<UsersEntity>) {}
 
-    public async getAllUsers() {
-        const allUsers = await this.usersRepository.find();
-
-        return allUsers;
+    public getAllUsers(): Promise<UsersEntity[]> {
+        return this.usersRepository.find();
     }
 
-    public async getUserById(id: string): Promise<UsersEntity | null> {
-        const user = await this.usersRepository.findOneBy({ id });
-
-        return user;
+    public getUserById(id: string): Promise<UsersEntity | null> {
+        return this.usersRepository.findOneBy({ id });
     }
 
-    public async getUserByEmail(email: string): Promise<UsersEntity | null> {
-        const user = await this.usersRepository.findOneBy({ email });
-
-        return user;
+    public getUserByEmail(email: string): Promise<UsersEntity | null> {
+        return this.usersRepository.findOneBy({ email });
     }
 
-    public async createUser(createUserDto: CreateUserDto): Promise<UsersEntity> {
+    public createUser(createUserDto: CreateUserDto): Promise<UsersEntity> {
         const user = this.usersRepository.create(createUserDto);
 
-        await this.usersRepository.save(user);
-
-        return user;
+        return this.usersRepository.save(user);
     }
 }

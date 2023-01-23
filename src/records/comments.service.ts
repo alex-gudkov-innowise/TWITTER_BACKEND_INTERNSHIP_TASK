@@ -30,7 +30,7 @@ export class CommentsService {
         });
     }
 
-    public async createComment(
+    public async createCommentOnRecord(
         createCommentDto: CreateCommentDto,
         author: UsersEntity,
         record: RecordsEntity,

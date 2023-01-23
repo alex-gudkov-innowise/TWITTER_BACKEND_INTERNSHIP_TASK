@@ -17,7 +17,7 @@ export class RetweetsService {
         private readonly filesService: FilesService,
     ) {}
 
-    public getUserRetweets(user: UsersEntity): Promise<RecordsEntity[] | null> {
+    public getUserRetweets(user: UsersEntity): Promise<RecordsEntity[]> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
@@ -47,7 +47,7 @@ export class RetweetsService {
         });
     }
 
-    public async createRetweet(
+    public async createRetweetOnRecord(
         createRetweetDto: CreateRetweetDto,
         author: UsersEntity,
         record: RecordsEntity,

@@ -26,10 +26,10 @@ export class RecordsController {
     ) {}
 
     @Get('/user/:userId/tweets')
-    public async getUserTweets(@Param('userId') userId: string) {
+    public async getAllUserTweets(@Param('userId') userId: string) {
         const user = await this.usersService.getUserById(userId);
 
-        return this.tweetsService.getUserTweets(user);
+        return this.tweetsService.getAllUserTweets(user);
     }
 
     @Get('/user/:userId/retweets')
@@ -51,7 +51,7 @@ export class RecordsController {
 
     @Post('/:recordId/retweet')
     @UseInterceptors(FilesInterceptor('imageFiles'))
-    public async createRetweet(
+    public async createRetweetOnRecord(
         @Body() createRetweetDto: CreateRetweetDto,
         @CurrentUserDecorator() author: UsersEntity,
         @Param('recordId') recordId: string,
@@ -59,12 +59,12 @@ export class RecordsController {
     ) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.retweetsService.createRetweet(createRetweetDto, author, record, imageFiles);
+        return this.retweetsService.createRetweetOnRecord(createRetweetDto, author, record, imageFiles);
     }
 
     @Post('/:recordId/comment')
     @UseInterceptors(FilesInterceptor('imageFiles'))
-    public async createComment(
+    public async createCommentOnRecord(
         @Body() createCommentDto: CreateCommentDto,
         @CurrentUserDecorator() author: UsersEntity,
         @Param('recordId') recordId: string,
@@ -72,7 +72,7 @@ export class RecordsController {
     ) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.commentsService.createComment(createCommentDto, author, record, imageFiles);
+        return this.commentsService.createCommentOnRecord(createCommentDto, author, record, imageFiles);
     }
 
     @Get('/tweet/:tweetId')

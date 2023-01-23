@@ -17,7 +17,7 @@ export class TweetsService {
         private readonly filesService: FilesService,
     ) {}
 
-    public getUserTweets(user: UsersEntity): Promise<RecordsEntity[] | null> {
+    public getAllUserTweets(user: UsersEntity): Promise<RecordsEntity[] | null> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
