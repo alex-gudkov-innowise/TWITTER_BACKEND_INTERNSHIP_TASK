@@ -1,5 +1,6 @@
-import { UsersEntity } from 'src/users/users.entity';
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Tree, TreeChildren, TreeParent } from 'typeorm';
+
+import { UsersEntity } from 'src/users/entities/users.entity';
 
 import { RecordImagesEntity } from './record-images.entity';
 

@@ -13,7 +13,6 @@ import { AuthModule } from './auth/auth.module';
 import { AuthController } from './auth/controllers/auth.controller';
 import { FilesModule } from './files/files.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
-import { RecordsController } from './records/controllers/tweets.controller';
 import { RecordsModule } from './records/records.module';
 import { UsersController } from './users/controllers/users.controller';
 import { UsersModule } from './users/users.module';
@@ -40,6 +39,6 @@ import { UsersModule } from './users/users.module';
 })
 export class AppModule {
     public configure(consumer: MiddlewareConsumer) {
-        consumer.apply(AuthMiddleware).forRoutes(UsersController, RecordsController, AuthController);
+        consumer.apply(AuthMiddleware).forRoutes(UsersController, UsersController, AuthController);
     }
 }
