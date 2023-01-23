@@ -18,8 +18,8 @@ export class AuthController {
 
     @UsePipes(ValidationPipe)
     @Post('/sign-up')
-    public signUpUser(@Body() dto: SignUpUserDto) {
-        return this.authService.signUpUser(dto);
+    public signUpUser(@Body() signUpUserDto: SignUpUserDto) {
+        return this.authService.signUpUser(signUpUserDto);
     }
 
     @Post('/confirm-email')
@@ -31,18 +31,18 @@ export class AuthController {
     }
 
     @Post('/sign-in')
-    public signInUser(@Body() dto: SignInUserDto, @PrivacyInfoDecorator() privacyInfo: PrivacyInfo) {
-        return this.authService.signInUser(dto, privacyInfo);
+    public signInUser(@Body() signInUserDto: SignInUserDto, @PrivacyInfoDecorator() privacyInfo: PrivacyInfo) {
+        return this.authService.signInUser(signInUserDto, privacyInfo);
     }
 
     @Post('/sign-out')
-    public signOutUser(@Body() dto: RefreshTokenDto) {
-        return this.authService.signOutUser(dto.refreshToken);
+    public signOutUser(@Body() refreshTokenDto: RefreshTokenDto) {
+        return this.authService.signOutUser(refreshTokenDto.value);
     }
 
     @Get('/new-access-token')
-    public getNewAccessToken(@Body() dto: RefreshTokenDto) {
-        return this.authService.getNewAccessToken(dto.refreshToken);
+    public getNewAccessToken(@Body() refreshTokenDto: RefreshTokenDto) {
+        return this.authService.getNewAccessToken(refreshTokenDto.value);
     }
 
     @UseGuards(AuthGuard)

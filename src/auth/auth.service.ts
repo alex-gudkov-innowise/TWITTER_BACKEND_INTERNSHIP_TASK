@@ -38,30 +38,30 @@ export class AuthService {
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
 
-    public async signUpUser(dto: SignUpUserDto): Promise<SentMessageInfo> {
-        const candidateUser = await this.usersService.getUserByEmail(dto.email);
+    public async signUpUser(signUpUserDto: SignUpUserDto): Promise<SentMessageInfo> {
+        const candidateUser = await this.usersService.getUserByEmail(signUpUserDto.email);
         if (candidateUser) {
             throw new BadRequestException({ message: 'user already exists' });
         }
 
         const verificationCode = crypto.randomBytes(3).toString('hex');
-        await this.cacheManager.set(verificationCode, dto);
+        await this.cacheManager.set(verificationCode, signUpUserDto);
 
-        return this.sendConfirmationEmail(dto.email, verificationCode);
+        return this.sendConfirmationEmail(signUpUserDto.email, verificationCode);
     }
 
     public async confirmEmail(verificationCode: string, privacyInfo: PrivacyInfo) {
-        const dto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
+        const signUpUserDto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
 
-        if (!dto) {
+        if (!signUpUserDto) {
             throw new BadRequestException({ message: 'invalid verification code' });
         }
 
         await this.cacheManager.del(verificationCode);
 
-        const hashedPassword = await bcryptjs.hash(dto.password, 4);
+        const hashedPassword = await bcryptjs.hash(signUpUserDto.password, 4);
         const user = await this.usersService.createUser({
-            ...dto,
+            ...signUpUserDto,
             password: hashedPassword,
         });
 
@@ -77,13 +77,13 @@ export class AuthService {
         };
     }
 
-    public async signInUser(dto: SignInUserDto, privacyInfo: PrivacyInfo) {
-        const user = await this.usersService.getUserByEmail(dto.email);
+    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo) {
+        const user = await this.usersService.getUserByEmail(signInUserDto.email);
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
 
-        const comparedPasswords = await bcryptjs.compare(dto.password, user.password);
+        const comparedPasswords = await bcryptjs.compare(signInUserDto.password, user.password);
         if (!comparedPasswords) {
             throw new UnauthorizedException({ message: 'wrong password' });
         }
@@ -94,7 +94,7 @@ export class AuthService {
 
         await this.deleteExtraUserSessions(user);
 
-        await this.sendLoginNotificationEmail(dto.email, privacyInfo);
+        await this.sendLoginNotificationEmail(signInUserDto.email, privacyInfo);
 
         return {
             accessToken,

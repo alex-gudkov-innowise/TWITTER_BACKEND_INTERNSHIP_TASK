@@ -7,7 +7,9 @@ import { UsersEntity } from 'src/users/users.entity';
 import { UsersService } from 'src/users/users.service';
 
 import { CommentsService } from './comments.service';
-import { CreateRecordDto } from './dto/create-record.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreateRetweetDto } from './dto/create-retweet.dto';
+import { CreateTweetDto } from './dto/create-tweet.dto';
 import { RecordsService } from './records.service';
 import { RetweetsService } from './retweets.service';
 import { TweetsService } from './tweets.service';
@@ -40,37 +42,37 @@ export class RecordsController {
     @Post('/tweet')
     @UseInterceptors(FilesInterceptor('imageFiles'))
     public createTweet(
-        @Body() dto: CreateRecordDto,
+        @Body() createTweetDto: CreateTweetDto,
         @CurrentUserDecorator() author: UsersEntity,
         @UploadedFiles() imageFiles: Array<Express.Multer.File>,
     ) {
-        return this.tweetsService.createTweet(dto, author, imageFiles);
+        return this.tweetsService.createTweet(createTweetDto, author, imageFiles);
     }
 
     @Post('/:recordId/retweet')
     @UseInterceptors(FilesInterceptor('imageFiles'))
     public async createRetweet(
-        @Body() dto: CreateRecordDto,
+        @Body() createRetweetDto: CreateRetweetDto,
         @CurrentUserDecorator() author: UsersEntity,
         @Param('recordId') recordId: string,
         @UploadedFiles() imageFiles: Array<Express.Multer.File>,
     ) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.retweetsService.createRetweet(dto, author, record, imageFiles);
+        return this.retweetsService.createRetweet(createRetweetDto, author, record, imageFiles);
     }
 
     @Post('/:recordId/comment')
     @UseInterceptors(FilesInterceptor('imageFiles'))
     public async createComment(
-        @Body() dto: CreateRecordDto,
+        @Body() createCommentDto: CreateCommentDto,
         @CurrentUserDecorator() author: UsersEntity,
         @Param('recordId') recordId: string,
         @UploadedFiles() imageFiles: Array<Express.Multer.File>,
     ) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.commentsService.createComment(dto, author, record, imageFiles);
+        return this.commentsService.createComment(createCommentDto, author, record, imageFiles);
     }
 
     @Get('/tweet/:tweetId')

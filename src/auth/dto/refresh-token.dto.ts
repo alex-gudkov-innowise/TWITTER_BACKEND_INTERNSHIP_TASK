@@ -1,3 +1,3 @@
 export class RefreshTokenDto {
-    readonly refreshToken: string;
+    readonly value: string;
 }

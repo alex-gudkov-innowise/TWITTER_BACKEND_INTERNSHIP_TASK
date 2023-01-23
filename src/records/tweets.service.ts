@@ -5,7 +5,7 @@ import { Repository, TreeRepository } from 'typeorm';
 import { FilesService } from 'src/files/files.service';
 import { UsersEntity } from 'src/users/users.entity';
 
-import { CreateRecordDto } from './dto/create-record.dto';
+import { CreateTweetDto } from './dto/create-tweet.dto';
 import { RecordImagesEntity } from './record-images.entity';
 import { RecordsEntity } from './records.entity';
 
@@ -47,12 +47,12 @@ export class TweetsService {
     }
 
     public async createTweet(
-        dto: CreateRecordDto,
+        createTweetDto: CreateTweetDto,
         author: UsersEntity,
         imageFiles: Array<Express.Multer.File> = [],
     ): Promise<RecordsEntity> {
         const tweet = this.recordsTreeRepository.create({
-            text: dto.text,
+            text: createTweetDto.text,
             isComment: false,
             isRetweet: false,
             author,
