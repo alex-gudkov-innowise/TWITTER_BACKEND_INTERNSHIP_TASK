@@ -24,6 +24,7 @@ import { UsersService } from 'src/users/services/users.service';
 
 import { SignInUserDto } from '../dtos/sign-in-user.dto';
 import { SignUpUserDto } from '../dtos/sign-up-user.dto';
+import { TokensPairDto } from '../dtos/tokens-pair.dto';
 import { RefreshTokensEntity } from '../entities/refresh-tokens.entity';
 
 @Injectable()
@@ -50,7 +51,7 @@ export class AuthService {
         return this.sendConfirmationEmail(signUpUserDto.email, verificationCode);
     }
 
-    public async confirmEmail(verificationCode: string, privacyInfo: PrivacyInfo) {
+    public async confirmEmail(verificationCode: string, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
         const signUpUserDto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
 
         if (!signUpUserDto) {
@@ -77,7 +78,7 @@ export class AuthService {
         };
     }
 
-    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo) {
+    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
         const user = await this.usersService.getUserByEmail(signInUserDto.email);
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
@@ -161,11 +162,16 @@ export class AuthService {
         });
     }
 
-    private async deleteExtraUserSessions(user: UsersEntity) {
+    private async getExtraUserSessions(user: UsersEntity): Promise<UserSessionEntity[]> {
         const allUserSessions = await this.getAllUserSessions(user);
         const sortedUserSession = this.sortSessionsByLoggedAtDesc(allUserSessions);
         const maxSessionsCount = this.configService.get<number>('MAX_SESSIONS_COUNT');
-        const userSessionsToDelete = sortedUserSession.splice(maxSessionsCount);
+
+        return sortedUserSession.splice(maxSessionsCount);
+    }
+
+    private async deleteExtraUserSessions(user: UsersEntity): Promise<void> {
+        const userSessionsToDelete = await this.getExtraUserSessions(user);
 
         await Promise.all(
             userSessionsToDelete.map(async (session: UserSessionEntity): Promise<void> => {
@@ -190,7 +196,7 @@ export class AuthService {
         );
     }
 
-    public getSessionById(sessionId: string) {
+    public getSessionById(sessionId: string): Promise<UserSessionEntity> {
         return this.cacheManager.get<UserSessionEntity>(sessionId);
     }
 
