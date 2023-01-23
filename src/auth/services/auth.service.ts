@@ -128,20 +128,31 @@ export class AuthService {
         return userSession;
     }
 
-    public async getAllUserSessions(user: UsersEntity): Promise<UserSessionEntity[] | null> {
+    public async getAllUserSessions(user: UsersEntity): Promise<UserSessionEntity[]> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });
         }
 
         const usersRefreshTokens = await this.refreshTokensRepository.findBy({ user });
+        const userSessions = this.filterRefreshTokensForSessions(usersRefreshTokens);
 
-        const userSessions = await Promise.all(
-            usersRefreshTokens.map((refreshToken: RefreshTokensEntity): Promise<UserSessionEntity> => {
-                return this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
+        return userSessions;
+    }
+
+    private async filterRefreshTokensForSessions(refreshTokens: RefreshTokensEntity[]): Promise<UserSessionEntity[]> {
+        const sessions = await Promise.all(
+            refreshTokens.map(async (refreshToken: RefreshTokensEntity): Promise<UserSessionEntity> => {
+                const session = await this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
+
+                if (!session) {
+                    await this.refreshTokensRepository.delete(refreshToken);
+                }
+
+                return session;
             }),
         );
 
-        return userSessions;
+        return sessions.filter((sessions) => Boolean(sessions));
     }
 
     private sortSessionsByLoggedAtDesc(sessions: UserSessionEntity[]): UserSessionEntity[] {
@@ -151,7 +162,8 @@ export class AuthService {
     }
 
     private async deleteExtraUserSessions(user: UsersEntity) {
-        const sortedUserSession = this.sortSessionsByLoggedAtDesc(await this.getAllUserSessions(user));
+        const allUserSessions = await this.getAllUserSessions(user);
+        const sortedUserSession = this.sortSessionsByLoggedAtDesc(allUserSessions);
         const maxSessionsCount = this.configService.get<number>('MAX_SESSIONS_COUNT');
         const userSessionsToDelete = sortedUserSession.splice(maxSessionsCount);
 
