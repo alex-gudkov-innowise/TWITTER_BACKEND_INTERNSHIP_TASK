@@ -28,8 +28,6 @@ export class TweetsController {
         @CurrentUserDecorator() author: UsersEntity,
         @UploadedFiles() imageFiles: Array<Express.Multer.File>,
     ) {
-        console.log(imageFiles);
-
         return this.tweetsService.createTweet(createTweetDto, author, imageFiles);
     }
 

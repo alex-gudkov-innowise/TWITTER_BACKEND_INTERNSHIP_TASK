@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CacheConfig } from 'cache-config';
+import { JwtConfig } from 'jwt-config';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersModule } from 'src/users/users.module';
 
@@ -16,7 +17,7 @@ import { AuthService } from './services/auth.service';
     providers: [AuthService],
     imports: [
         UsersModule,
-        JwtModule.register({}),
+        JwtModule.registerAsync({ useClass: JwtConfig }),
         TypeOrmModule.forFeature([RefreshTokensEntity, UsersEntity]),
         MailerModule,
         CacheModule.registerAsync({ useClass: CacheConfig }),

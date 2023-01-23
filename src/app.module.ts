@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { JwtConfig } from 'jwt-config';
 import { MailerConfig } from 'mailer-config';
 import { ServeStaticConfig } from 'serve-static-config';
 import { TypeOrmConfig } from 'typeorm-config';
@@ -31,7 +32,7 @@ import { UsersModule } from './users/users.module';
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfig }),
         MailerModule.forRootAsync({ useClass: MailerConfig }),
         ServeStaticModule.forRootAsync({ useClass: ServeStaticConfig }),
-        JwtModule.register({}),
+        JwtModule.registerAsync({ useClass: JwtConfig }),
         UsersModule,
         AuthModule,
         RecordsModule,
