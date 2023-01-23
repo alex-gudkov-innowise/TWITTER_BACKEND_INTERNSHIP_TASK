@@ -14,17 +14,17 @@ import * as bcryptjs from 'bcryptjs';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { SentMessageInfo } from 'nodemailer';
+import { UsersEntity } from 'src/users/users.entity';
+import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import * as uuid from 'uuid';
 
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
-import { UsersEntity } from 'src/users/users.entity';
-import { UsersService } from 'src/users/users.service';
 
-import { SignInUserDto } from './dto/sign-in-user.dto';
-import { SignUpUserDto } from './dto/sign-up-user.dto';
-import { RefreshTokensEntity } from './refresh-tokens.entity';
+import { SignInUserDto } from '../dtos/sign-in-user.dto';
+import { SignUpUserDto } from '../dtos/sign-up-user.dto';
+import { RefreshTokensEntity } from '../entities/refresh-tokens.entity';
 
 @Injectable()
 export class AuthService {

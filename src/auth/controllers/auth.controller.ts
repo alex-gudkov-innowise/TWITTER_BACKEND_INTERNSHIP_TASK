@@ -5,12 +5,12 @@ import { PrivacyInfoDecorator } from 'src/decorators/privacy-info.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 import { ValidationPipe } from 'src/pipes/validation.pipe';
-import { UsersEntity } from 'src/users/users.entity';
+import { UsersEntity } from 'src/users/entities/users.entity';
 
-import { AuthService } from './auth.service';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { SignInUserDto } from './dto/sign-in-user.dto';
-import { SignUpUserDto } from './dto/sign-up-user.dto';
+import { RefreshTokenDto } from '../dtos/refresh-token.dto';
+import { SignInUserDto } from '../dtos/sign-in-user.dto';
+import { SignUpUserDto } from '../dtos/sign-up-user.dto';
+import { AuthService } from '../services/auth.service';
 
 @Controller('/auth')
 export class AuthController {

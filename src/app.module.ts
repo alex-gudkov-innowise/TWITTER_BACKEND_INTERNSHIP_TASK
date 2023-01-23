@@ -9,13 +9,13 @@ import * as path from 'path';
 import { MailerConfig } from 'mailer-config';
 import { TypeOrmConfig } from 'typeorm-config';
 
-import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
+import { AuthController } from './auth/controllers/auth.controller';
 import { FilesModule } from './files/files.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
-import { RecordsController } from './records/records.controller';
+import { RecordsController } from './records/controllers/tweets.controller';
 import { RecordsModule } from './records/records.module';
-import { UsersController } from './users/users.controller';
+import { UsersController } from './users/controllers/users.controller';
 import { UsersModule } from './users/users.module';
 
 @Module({

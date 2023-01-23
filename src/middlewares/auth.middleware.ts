@@ -2,9 +2,9 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Response, NextFunction } from 'express';
+import { UsersService } from 'src/users/users.service';
 
 import { RequestWithUser } from 'src/interfaces/request-with-user.interface';
-import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
