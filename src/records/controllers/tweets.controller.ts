@@ -14,7 +14,7 @@ import { TweetsService } from '../services/tweets.service';
 export class TweetsController {
     constructor(private readonly tweetsService: TweetsService, private readonly usersService: UsersService) {}
 
-    @Get('/user/:userId/tweets')
+    @Get('/user/:userId')
     public async getAllUserTweets(@Param('userId') userId: string) {
         const user = await this.usersService.getUserById(userId);
 
@@ -28,6 +28,8 @@ export class TweetsController {
         @CurrentUserDecorator() author: UsersEntity,
         @UploadedFiles() imageFiles: Array<Express.Multer.File>,
     ) {
+        console.log(imageFiles);
+
         return this.tweetsService.createTweet(createTweetDto, author, imageFiles);
     }
 

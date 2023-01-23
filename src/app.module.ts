@@ -13,6 +13,9 @@ import { AuthModule } from './auth/auth.module';
 import { AuthController } from './auth/controllers/auth.controller';
 import { FilesModule } from './files/files.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
+import { CommentsController } from './records/controllers/comments.controller';
+import { RetweetsController } from './records/controllers/retweets.controller';
+import { TweetsController } from './records/controllers/tweets.controller';
 import { RecordsModule } from './records/records.module';
 import { UsersController } from './users/controllers/users.controller';
 import { UsersModule } from './users/users.module';
@@ -27,8 +30,8 @@ import { UsersModule } from './users/users.module';
         }),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfig }),
         MailerModule.forRootAsync({ useClass: MailerConfig }),
-        JwtModule.register({}),
         ServeStaticModule.forRootAsync({ useClass: ServeStaticConfig }),
+        JwtModule.register({}),
         UsersModule,
         AuthModule,
         RecordsModule,
@@ -37,6 +40,8 @@ import { UsersModule } from './users/users.module';
 })
 export class AppModule {
     public configure(consumer: MiddlewareConsumer) {
-        consumer.apply(AuthMiddleware).forRoutes(UsersController, UsersController, AuthController);
+        consumer
+            .apply(AuthMiddleware)
+            .forRoutes(UsersController, AuthController, TweetsController, CommentsController, RetweetsController);
     }
 }
