@@ -7,7 +7,7 @@ import { UsersEntity } from 'src/users/entities/users.entity';
 
 import { RecordImagesEntity } from '../entities/record-images.entity';
 import { RecordsEntity } from '../entities/records.entity';
-import { CreateRetweetDto } from '../dtos/create-retweet.dto';
+import { CreateRetweetDto } from '../dto/create-retweet.dto';
 
 @Injectable()
 export class RetweetsService {

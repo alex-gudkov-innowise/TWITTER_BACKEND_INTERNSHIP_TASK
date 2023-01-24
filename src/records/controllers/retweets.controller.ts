@@ -6,7 +6,7 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/services/users.service';
 
-import { CreateRetweetDto } from '../dtos/create-retweet.dto';
+import { CreateRetweetDto } from '../dto/create-retweet.dto';
 import { RecordsService } from '../services/records.service';
 import { RetweetsService } from '../services/retweets.service';
 import { TweetsService } from '../services/tweets.service';

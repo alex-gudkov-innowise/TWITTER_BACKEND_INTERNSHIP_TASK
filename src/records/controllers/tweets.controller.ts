@@ -18,7 +18,7 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/services/users.service';
 
-import { CreateTweetDto } from '../dtos/create-tweet.dto';
+import { CreateTweetDto } from '../dto/create-tweet.dto';
 import { TweetsService } from '../services/tweets.service';
 
 @UseGuards(AuthGuard)

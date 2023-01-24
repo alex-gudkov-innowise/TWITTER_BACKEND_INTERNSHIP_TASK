@@ -6,7 +6,7 @@ import { RestrictionsEntity } from 'src/ability/restrictions.entity';
 import { FilesService } from 'src/files/files.service';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
-import { CreateTweetDto } from '../dtos/create-tweet.dto';
+import { CreateTweetDto } from '../dto/create-tweet.dto';
 import { RecordImagesEntity } from '../entities/record-images.entity';
 import { RecordsEntity } from '../entities/records.entity';
 

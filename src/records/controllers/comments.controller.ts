@@ -5,7 +5,7 @@ import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
-import { CreateCommentDto } from '../dtos/create-comment.dto';
+import { CreateCommentDto } from '../dto/create-comment.dto';
 import { CommentsService } from '../services/comments.service';
 import { RecordsService } from '../services/records.service';
 
