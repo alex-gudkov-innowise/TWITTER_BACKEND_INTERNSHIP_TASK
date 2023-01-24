@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AbilityModule } from 'src/ability/ability.module';
+import { RestrictionsEntity } from 'src/ability/restrictions.entity';
 import { FilesModule } from 'src/files/files.module';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersModule } from 'src/users/users.module';
@@ -20,7 +21,7 @@ import { TweetsService } from './services/tweets.service';
     controllers: [TweetsController, CommentsController, RetweetsController],
     providers: [RecordsService, TweetsService, RetweetsService, CommentsService],
     imports: [
-        TypeOrmModule.forFeature([RecordsEntity, UsersEntity, RecordImagesEntity]),
+        TypeOrmModule.forFeature([RecordsEntity, UsersEntity, RecordImagesEntity, RestrictionsEntity]),
         UsersModule,
         RecordsModule,
         FilesModule,

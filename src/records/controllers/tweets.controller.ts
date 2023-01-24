@@ -30,6 +30,16 @@ export class TweetsController {
         private readonly abilityFactory: AbilityFactory,
     ) {}
 
+    @Post('/restrict/read/:userId')
+    public async createReadingTweetsRestriction(
+        @Param('userId') targetUserId: string,
+        @CurrentUserDecorator() initiatorUser: UsersEntity,
+    ) {
+        const targetUser = await this.usersService.getUserById(targetUserId);
+
+        return this.tweetsService.createReadingTweetsRestriction(targetUser, initiatorUser);
+    }
+
     @Get('/user/:userId')
     public async getAllUserTweets(@Param('userId') userId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
         const user = await this.usersService.getUserById(userId);
