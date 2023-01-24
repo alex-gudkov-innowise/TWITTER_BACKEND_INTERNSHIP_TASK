@@ -10,8 +10,6 @@ import { MailerConfig } from 'mailer-config';
 import { ServeStaticConfig } from 'serve-static-config';
 import { TypeOrmConfig } from 'typeorm-config';
 
-import { AbilityModule } from './ability/ability.module';
-import { RestrictionsController } from './ability/restrictions.controller';
 import { AuthModule } from './auth/auth.module';
 import { AuthController } from './auth/controllers/auth.controller';
 import { FilesModule } from './files/files.module';
@@ -20,6 +18,8 @@ import { CommentsController } from './records/controllers/comments.controller';
 import { RetweetsController } from './records/controllers/retweets.controller';
 import { TweetsController } from './records/controllers/tweets.controller';
 import { RecordsModule } from './records/records.module';
+import { RestrictionsController } from './restrictions/restrictions.controller';
+import { RestrictionsModule } from './restrictions/restrictions.module';
 import { UsersController } from './users/controllers/users.controller';
 import { UsersModule } from './users/users.module';
 
@@ -39,7 +39,7 @@ import { UsersModule } from './users/users.module';
         AuthModule,
         RecordsModule,
         FilesModule,
-        AbilityModule,
+        RestrictionsModule,
     ],
 })
 export class AppModule {

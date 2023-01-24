@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AbilityModule } from 'src/ability/ability.module';
-import { RestrictionsEntity } from 'src/ability/restrictions.entity';
 import { FilesModule } from 'src/files/files.module';
+import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
+import { RestrictionsModule } from 'src/restrictions/restrictions.module';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersModule } from 'src/users/users.module';
 
@@ -25,7 +25,7 @@ import { TweetsService } from './services/tweets.service';
         UsersModule,
         RecordsModule,
         FilesModule,
-        AbilityModule,
+        RestrictionsModule,
     ],
 })
 export class RecordsModule {}

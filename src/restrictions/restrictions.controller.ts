@@ -4,7 +4,7 @@ import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
-import { RestrictionsService } from './restriction.service';
+import { RestrictionsService } from './restrictions.service';
 
 @UseGuards(AuthGuard)
 @Controller('/restrictions')

@@ -2,8 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, TreeRepository } from 'typeorm';
 
-import { RestrictionsEntity } from 'src/ability/restrictions.entity';
 import { FilesService } from 'src/files/files.service';
+import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
 import { CreateTweetDto } from '../dto/create-tweet.dto';

@@ -1,8 +1,8 @@
 import { Controller, Delete, ForbiddenException, Get, Param, UseGuards } from '@nestjs/common';
 
-import { AbilityFactory } from 'src/ability/ability.factory';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { AbilityFactory } from 'src/restrictions/ability.factory';
 
 import { UsersEntity } from '../entities/users.entity';
 import { UsersService } from '../services/users.service';
