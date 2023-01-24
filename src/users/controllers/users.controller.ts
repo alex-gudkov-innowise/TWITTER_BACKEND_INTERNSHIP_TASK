@@ -1,4 +1,5 @@
-import { Controller, Delete, ForbiddenException, Get, Param, UseGuards } from '@nestjs/common';
+import { ForbiddenError } from '@casl/ability';
+import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
 
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
@@ -27,11 +28,7 @@ export class UsersController {
         const user = await this.usersService.getUserById(userId);
 
         const currentUserAbility = await this.abilityFactory.defineAbility(currentUser, user);
-        const isCanDeleteUser = currentUserAbility.can('delete', 'users');
-
-        if (!isCanDeleteUser) {
-            throw new ForbiddenException('cannot delete user');
-        }
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('delete', 'users');
 
         return this.usersService.deleteUser(user);
     }

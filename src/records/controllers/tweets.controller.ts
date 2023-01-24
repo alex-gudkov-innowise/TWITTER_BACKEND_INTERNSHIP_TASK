@@ -1,3 +1,4 @@
+import { ForbiddenError } from '@casl/ability';
 import {
     Body,
     Controller,
@@ -30,7 +31,7 @@ export class TweetsController {
         private readonly abilityFactory: AbilityFactory,
     ) {}
 
-    @Post('/restrict/read/:userId')
+    @Post('/restriction/read/:userId')
     public async createReadingTweetsRestriction(
         @Param('userId') targetUserId: string,
         @CurrentUserDecorator() initiatorUser: UsersEntity,
@@ -45,11 +46,7 @@ export class TweetsController {
         const user = await this.usersService.getUserById(userId);
 
         const currentUserAbility = await this.abilityFactory.defineAbility(currentUser, user);
-        const isCanRead = currentUserAbility.can('read', 'tweets');
-
-        if (!isCanRead) {
-            throw new ForbiddenException('cannot read user tweets');
-        }
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('read', 'tweets');
 
         return this.tweetsService.getAllUserTweets(user);
     }
