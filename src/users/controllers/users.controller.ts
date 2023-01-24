@@ -35,4 +35,9 @@ export class UsersController {
 
         return this.usersService.deleteUser(user);
     }
+
+    @Get('/restrictions')
+    public getUserRestrictions(@CurrentUserDecorator() currentUser: UsersEntity) {
+        return this.usersService.getUserRestrictions(currentUser);
+    }
 }
