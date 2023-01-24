@@ -8,7 +8,7 @@ import { UsersEntity } from 'src/users/entities/users.entity';
 import { RestrictionsEntity } from './restrictions.entity';
 
 @Injectable()
-export class AbilityFactory {
+export class CaslAbilityFactory {
     constructor(
         @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
