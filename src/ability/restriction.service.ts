@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 
 import { UsersEntity } from 'src/users/entities/users.entity';
 
@@ -25,5 +25,17 @@ export class RestrictionsService {
                 targetUser: true,
             },
         });
+    }
+
+    public getRestrictionById(restrictionId: string): Promise<RestrictionsEntity | null> {
+        return this.restrictionsRepository.findOneBy({ id: restrictionId });
+    }
+
+    public deleteRestriction(restriction: RestrictionsEntity): Promise<DeleteResult> {
+        if (!restriction) {
+            throw new NotFoundException('restriction not found');
+        }
+
+        return this.restrictionsRepository.delete(restriction);
     }
 }

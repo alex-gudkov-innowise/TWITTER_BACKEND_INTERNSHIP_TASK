@@ -10,6 +10,8 @@ import { MailerConfig } from 'mailer-config';
 import { ServeStaticConfig } from 'serve-static-config';
 import { TypeOrmConfig } from 'typeorm-config';
 
+import { AbilityModule } from './ability/ability.module';
+import { RestrictionsController } from './ability/restrictions.controller';
 import { AuthModule } from './auth/auth.module';
 import { AuthController } from './auth/controllers/auth.controller';
 import { FilesModule } from './files/files.module';
@@ -20,7 +22,6 @@ import { TweetsController } from './records/controllers/tweets.controller';
 import { RecordsModule } from './records/records.module';
 import { UsersController } from './users/controllers/users.controller';
 import { UsersModule } from './users/users.module';
-import { AbilityModule } from './ability/ability.module';
 
 @Module({
     controllers: [],
@@ -45,6 +46,13 @@ export class AppModule {
     public configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(AuthMiddleware)
-            .forRoutes(UsersController, AuthController, TweetsController, CommentsController, RetweetsController);
+            .forRoutes(
+                UsersController,
+                AuthController,
+                TweetsController,
+                CommentsController,
+                RetweetsController,
+                RestrictionsController,
+            );
     }
 }
