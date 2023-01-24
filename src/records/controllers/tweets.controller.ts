@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
-import { AbilityFactory, Actions } from 'src/ability/ability.factory';
+import { AbilityFactory } from 'src/ability/ability.factory';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
@@ -31,8 +31,15 @@ export class TweetsController {
     ) {}
 
     @Get('/user/:userId')
-    public async getAllUserTweets(@Param('userId') userId: string) {
+    public async getAllUserTweets(@Param('userId') userId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
         const user = await this.usersService.getUserById(userId);
+
+        const currentUserAbility = await this.abilityFactory.defineAbility(currentUser, user);
+        const isCanRead = currentUserAbility.can('read', 'tweets');
+
+        if (!isCanRead) {
+            throw new ForbiddenException('cannot read user tweets');
+        }
 
         return this.tweetsService.getAllUserTweets(user);
     }
@@ -48,29 +55,13 @@ export class TweetsController {
     }
 
     @Get('/:tweetId')
-    public async getTweetById(@Param('tweetId') tweetId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
-        const tweet = await this.tweetsService.getTweetById(tweetId);
-
-        const ability = await this.abilityFactory.defineAbility(currentUser, tweet.author, tweet);
-        const isAllowed = ability.can(Actions.read, 'records');
-
-        if (!isAllowed) {
-            throw new ForbiddenException('cannot delete');
-        }
-
-        return tweet;
+    public getTweetById(@Param('tweetId') tweetId: string) {
+        return this.tweetsService.getTweetById(tweetId);
     }
 
     @Delete('/:tweetId')
-    public async removeTweet(@Param('tweetId') tweetId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
+    public async removeTweet(@Param('tweetId') tweetId: string) {
         const tweet = await this.tweetsService.getTweetById(tweetId);
-
-        const ability = await this.abilityFactory.defineAbility(currentUser, tweet.author, tweet);
-        const isAllowed = ability.can(Actions.delete, 'records');
-
-        if (!isAllowed) {
-            throw new ForbiddenException('cannot delete');
-        }
 
         return this.tweetsService.removeTweet(tweet);
     }

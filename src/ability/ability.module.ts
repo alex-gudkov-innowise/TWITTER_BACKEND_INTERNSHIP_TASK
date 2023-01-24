@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AbilityFactory } from './ability.factory';
-import { ClosedRecordsEntity } from './closed-records.entity';
+import { RestrictionsEntity } from './restrictions.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([ClosedRecordsEntity])],
+    imports: [TypeOrmModule.forFeature([RestrictionsEntity])],
     providers: [AbilityFactory],
     exports: [AbilityFactory],
 })

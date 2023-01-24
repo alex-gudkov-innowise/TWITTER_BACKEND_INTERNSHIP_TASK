@@ -3,44 +3,34 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { RecordsEntity } from 'src/records/entities/records.entity';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
-import { ClosedRecordsEntity } from './closed-records.entity';
-
-export enum Actions {
-    create = 'create',
-    delete = 'delete',
-    manage = 'manage',
-    read = 'read',
-    update = 'update',
-}
+import { RestrictionsEntity } from './restrictions.entity';
 
 @Injectable()
 export class AbilityFactory {
     constructor(
-        @InjectRepository(ClosedRecordsEntity)
-        private readonly closedRecordsRepository: Repository<ClosedRecordsEntity>,
+        @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
 
-    public async defineAbility(currentUser: UsersEntity, author: UsersEntity, record: RecordsEntity) {
+    public async defineAbility(targetUser: UsersEntity, initiatorUser: UsersEntity) {
         const { build, can, cannot } = new AbilityBuilder(createMongoAbility);
 
-        if (currentUser.id === author.id) {
-            can(Actions.delete, 'records');
-        }
-
-        const closedRecord = await this.closedRecordsRepository.findOne({
+        const restrictions = await this.restrictionsRepository.find({
             where: {
-                fromUser: currentUser,
-                author,
-                record,
+                targetUser,
+                initiatorUser,
             },
         });
 
-        if (!closedRecord) {
-            can(Actions.read, 'records');
-        }
+        can('read', 'tweets');
+        can('read', 'retweets');
+        can('create', 'retweets');
+        can('create', 'comments');
+
+        restrictions.forEach((restrictions) => {
+            cannot(restrictions.action, restrictions.subject);
+        });
 
         return build();
     }
