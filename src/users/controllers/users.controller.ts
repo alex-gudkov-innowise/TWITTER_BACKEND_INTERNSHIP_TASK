@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 
 import { AuthGuard } from 'src/guards/auth.guard';
 
@@ -12,5 +12,10 @@ export class UsersController {
     @Get('/all')
     public getAllUsers() {
         return this.usersService.getAllUsers();
+    }
+
+    @Get('/:userId')
+    public getUserById(@Param('userId') userId: string) {
+        return this.usersService.getUserById(userId);
     }
 }
