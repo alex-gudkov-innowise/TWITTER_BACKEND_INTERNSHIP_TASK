@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
 
 import { AuthGuard } from 'src/guards/auth.guard';
 
@@ -17,5 +17,12 @@ export class UsersController {
     @Get('/:userId')
     public getUserById(@Param('userId') userId: string) {
         return this.usersService.getUserById(userId);
+    }
+
+    @Delete('/:userId')
+    public async deleteUser(@Param('userId') userId: string) {
+        const user = await this.usersService.getUserById(userId);
+
+        return this.usersService.deleteUser(user);
     }
 }

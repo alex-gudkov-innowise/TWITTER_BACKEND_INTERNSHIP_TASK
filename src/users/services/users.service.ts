@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository } from 'typeorm';
 
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UsersEntity } from '../entities/users.entity';
@@ -25,5 +25,9 @@ export class UsersService {
         const user = this.usersRepository.create(createUserDto);
 
         return this.usersRepository.save(user);
+    }
+
+    public deleteUser(user: UsersEntity): Promise<DeleteResult> {
+        return this.usersRepository.delete(user);
     }
 }
