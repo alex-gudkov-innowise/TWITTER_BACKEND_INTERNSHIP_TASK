@@ -1,7 +1,9 @@
 import { ForbiddenError } from '@casl/ability';
 import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
 
+import { CheckAbilityDecorator } from 'src/decorators/check-ability.decorator';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
+import { AbilityGuard } from 'src/guards/ability.guard';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { CaslAbilityFactory } from 'src/restrictions/casl-ability.factory';
 
@@ -11,7 +13,7 @@ import { UsersService } from '../services/users.service';
 @UseGuards(AuthGuard)
 @Controller('/users')
 export class UsersController {
-    constructor(private readonly usersService: UsersService, private readonly caslAbilityFactory: CaslAbilityFactory) {}
+    constructor(private readonly usersService: UsersService) {}
 
     @Get('/all')
     public getAllUsers() {
@@ -24,11 +26,10 @@ export class UsersController {
     }
 
     @Delete('/:userId')
-    public async deleteUser(@Param('userId') userId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
+    @UseGuards(AbilityGuard)
+    @CheckAbilityDecorator({ action: 'delete', subject: 'users' })
+    public async deleteUser(@Param('userId') userId: string) {
         const user = await this.usersService.getUserById(userId);
-
-        const currentUserAbility = await this.caslAbilityFactory.defineAbility(currentUser, user);
-        ForbiddenError.from(currentUserAbility).throwUnlessCan('delete', 'users');
 
         return this.usersService.deleteUser(user);
     }

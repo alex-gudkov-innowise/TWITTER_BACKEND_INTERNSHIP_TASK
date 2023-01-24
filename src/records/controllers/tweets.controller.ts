@@ -13,7 +13,9 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
+import { CheckAbilityDecorator } from 'src/decorators/check-ability.decorator';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
+import { AbilityGuard } from 'src/guards/ability.guard';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { CaslAbilityFactory } from 'src/restrictions/casl-ability.factory';
 import { UsersEntity } from 'src/users/entities/users.entity';
@@ -25,11 +27,7 @@ import { TweetsService } from '../services/tweets.service';
 @UseGuards(AuthGuard)
 @Controller('tweets')
 export class TweetsController {
-    constructor(
-        private readonly tweetsService: TweetsService,
-        private readonly usersService: UsersService,
-        private readonly caslAbilityFactory: CaslAbilityFactory,
-    ) {}
+    constructor(private readonly tweetsService: TweetsService, private readonly usersService: UsersService) {}
 
     @Post('/restriction/read/:userId')
     public async createReadingTweetsRestriction(
@@ -42,11 +40,10 @@ export class TweetsController {
     }
 
     @Get('/user/:userId')
-    public async getAllUserTweets(@Param('userId') userId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
+    @UseGuards(AbilityGuard)
+    @CheckAbilityDecorator({ action: 'read', subject: 'tweets' })
+    public async getAllUserTweets(@Param('userId') userId: string) {
         const user = await this.usersService.getUserById(userId);
-
-        const currentUserAbility = await this.caslAbilityFactory.defineAbility(currentUser, user);
-        ForbiddenError.from(currentUserAbility).throwUnlessCan('read', 'tweets');
 
         return this.tweetsService.getAllUserTweets(user);
     }
