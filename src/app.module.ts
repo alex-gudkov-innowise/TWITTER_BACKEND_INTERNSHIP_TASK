@@ -20,6 +20,7 @@ import { TweetsController } from './records/controllers/tweets.controller';
 import { RecordsModule } from './records/records.module';
 import { UsersController } from './users/controllers/users.controller';
 import { UsersModule } from './users/users.module';
+import { AbilityModule } from './ability/ability.module';
 
 @Module({
     controllers: [],
@@ -37,6 +38,7 @@ import { UsersModule } from './users/users.module';
         AuthModule,
         RecordsModule,
         FilesModule,
+        AbilityModule,
     ],
 })
 export class AppModule {

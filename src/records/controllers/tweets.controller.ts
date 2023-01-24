@@ -1,6 +1,18 @@
-import { Body, Controller, Delete, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    ForbiddenException,
+    Get,
+    Param,
+    Post,
+    UploadedFiles,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
+import { AbilityFactory, Actions } from 'src/ability/ability.factory';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
@@ -12,7 +24,11 @@ import { TweetsService } from '../services/tweets.service';
 @UseGuards(AuthGuard)
 @Controller('tweets')
 export class TweetsController {
-    constructor(private readonly tweetsService: TweetsService, private readonly usersService: UsersService) {}
+    constructor(
+        private readonly tweetsService: TweetsService,
+        private readonly usersService: UsersService,
+        private readonly abilityFactory: AbilityFactory,
+    ) {}
 
     @Get('/user/:userId')
     public async getAllUserTweets(@Param('userId') userId: string) {
@@ -32,7 +48,14 @@ export class TweetsController {
     }
 
     @Get('/:tweetId')
-    public getTweetById(@Param('tweetId') tweetId: string) {
+    public getTweetById(@Param('tweetId') tweetId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
+        const ability = this.abilityFactory.defineAbility(currentUser);
+        const isAllowed = ability.can(Actions.read, 'user-tweet');
+
+        if (!isAllowed) {
+            throw new ForbiddenException('cannot read this tweet');
+        }
+
         return this.tweetsService.getTweetById(tweetId);
     }
 

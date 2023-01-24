@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AbilityModule } from 'src/ability/ability.module';
 import { FilesModule } from 'src/files/files.module';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersModule } from 'src/users/users.module';
@@ -23,6 +24,7 @@ import { TweetsService } from './services/tweets.service';
         UsersModule,
         RecordsModule,
         FilesModule,
+        AbilityModule,
     ],
 })
 export class RecordsModule {}
