@@ -32,6 +32,10 @@ export class AbilityFactory {
             cannot(restrictions.action, restrictions.subject);
         });
 
+        if (targetUser.id === initiatorUser.id) {
+            can('delete', 'users');
+        }
+
         return build();
     }
 }
