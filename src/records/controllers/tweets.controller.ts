@@ -48,20 +48,29 @@ export class TweetsController {
     }
 
     @Get('/:tweetId')
-    public getTweetById(@Param('tweetId') tweetId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
-        const ability = this.abilityFactory.defineAbility(currentUser);
-        const isAllowed = ability.can(Actions.read, 'user-tweet');
+    public async getTweetById(@Param('tweetId') tweetId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
+        const tweet = await this.tweetsService.getTweetById(tweetId);
+
+        const ability = await this.abilityFactory.defineAbility(currentUser, tweet.author, tweet);
+        const isAllowed = ability.can(Actions.read, 'records');
 
         if (!isAllowed) {
-            throw new ForbiddenException('cannot read this tweet');
+            throw new ForbiddenException('cannot delete');
         }
 
-        return this.tweetsService.getTweetById(tweetId);
+        return tweet;
     }
 
     @Delete('/:tweetId')
-    public async removeTweet(@Param('tweetId') tweetId: string) {
+    public async removeTweet(@Param('tweetId') tweetId: string, @CurrentUserDecorator() currentUser: UsersEntity) {
         const tweet = await this.tweetsService.getTweetById(tweetId);
+
+        const ability = await this.abilityFactory.defineAbility(currentUser, tweet.author, tweet);
+        const isAllowed = ability.can(Actions.delete, 'records');
+
+        if (!isAllowed) {
+            throw new ForbiddenException('cannot delete');
+        }
 
         return this.tweetsService.removeTweet(tweet);
     }

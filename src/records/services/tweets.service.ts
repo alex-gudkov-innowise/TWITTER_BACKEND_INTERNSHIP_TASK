@@ -42,6 +42,7 @@ export class TweetsService {
             },
             relations: {
                 images: true,
+                author: true,
             },
         });
     }
