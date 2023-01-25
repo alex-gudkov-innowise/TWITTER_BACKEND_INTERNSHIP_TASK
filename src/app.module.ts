@@ -1,5 +1,5 @@
 import { MailerModule } from '@nestjs-modules/mailer';
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -8,7 +8,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfig } from 'src/configs/typeorm-config';
 
 import { AuthModule } from './auth/auth.module';
-import { AuthController } from './auth/controllers/auth.controller';
 import { JwtConfig } from './configs/jwt-config';
 import { MailerConfig } from './configs/mailer-config';
 import { ServeStaticConfig } from './configs/serve-static-config';
@@ -48,11 +47,13 @@ export class AppModule {
             .apply(AuthMiddleware)
             .forRoutes(
                 UsersController,
-                AuthController,
                 TweetsController,
                 CommentsController,
                 RetweetsController,
                 RestrictionsController,
+                { path: '/sessions/all', method: RequestMethod.GET },
+                { path: '/sessions/:sessionId', method: RequestMethod.DELETE },
+                { path: '/sessions/all', method: RequestMethod.DELETE },
             );
     }
 }
