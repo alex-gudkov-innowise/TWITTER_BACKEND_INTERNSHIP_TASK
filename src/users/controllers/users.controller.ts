@@ -1,5 +1,7 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
 
+import { CheckAbilityDecorator } from 'src/decorators/check-ability.decorator';
+import { AbilityGuard } from 'src/guards/ability.guard';
 import { AuthGuard } from 'src/guards/auth.guard';
 
 import { UsersService } from '../services/users.service';
@@ -12,5 +14,19 @@ export class UsersController {
     @Get('/all')
     public getAllUsers() {
         return this.usersService.getAllUsers();
+    }
+
+    @Get('/:userId')
+    public getUserById(@Param('userId') userId: string) {
+        return this.usersService.getUserById(userId);
+    }
+
+    @Delete('/:userId')
+    @UseGuards(AbilityGuard)
+    @CheckAbilityDecorator({ action: 'delete', subject: 'users' })
+    public async deleteUser(@Param('userId') userId: string) {
+        const user = await this.usersService.getUserById(userId);
+
+        return this.usersService.deleteUser(user);
     }
 }

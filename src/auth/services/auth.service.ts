@@ -22,9 +22,9 @@ import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/services/users.service';
 
-import { SignInUserDto } from '../dtos/sign-in-user.dto';
-import { SignUpUserDto } from '../dtos/sign-up-user.dto';
-import { TokensPairDto } from '../dtos/tokens-pair.dto';
+import { SignInUserDto } from '../dto/sign-in-user.dto';
+import { SignUpUserDto } from '../dto/sign-up-user.dto';
+import { TokensPairDto } from '../dto/tokens-pair.dto';
 import { RefreshTokensEntity } from '../entities/refresh-tokens.entity';
 
 @Injectable()
