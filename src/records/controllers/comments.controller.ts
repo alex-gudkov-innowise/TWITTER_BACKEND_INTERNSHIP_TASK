@@ -21,7 +21,7 @@ export class CommentsController {
         private readonly usersService: UsersService,
     ) {}
 
-    @Post('/restriction/read/:userId')
+    @Post('/restriction/create/:userId')
     public async createCreatingCommentsRestriction(
         @Param('userId') targetUserId: string,
         @CurrentUserDecorator() initiatorUser: UsersEntity,
