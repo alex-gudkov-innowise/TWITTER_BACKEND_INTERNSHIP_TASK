@@ -37,6 +37,24 @@ export class RetweetsService {
         return this.restrictionsRepository.save(restriction);
     }
 
+    public createCreatingRetweetsRestriction(
+        targetUser: UsersEntity,
+        initiatorUser: UsersEntity,
+    ): Promise<RestrictionsEntity> {
+        if (targetUser.id === initiatorUser.id) {
+            throw new BadRequestException('user cannot restrict himself');
+        }
+
+        const restriction = this.restrictionsRepository.create({
+            targetUser,
+            initiatorUser,
+            action: 'create',
+            subject: 'retweets',
+        });
+
+        return this.restrictionsRepository.save(restriction);
+    }
+
     public getUserRetweets(user: UsersEntity): Promise<RecordsEntity[]> {
         if (!user) {
             throw new NotFoundException({ message: 'user not found' });

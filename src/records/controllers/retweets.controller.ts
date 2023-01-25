@@ -33,6 +33,16 @@ export class RetweetsController {
         return this.retweetsService.createReadingRetweetsRestriction(targetUser, initiatorUser);
     }
 
+    @Post('/restriction/create/:userId')
+    public async createCreatingRetweetsRestriction(
+        @Param('userId') targetUserId: string,
+        @CurrentUserDecorator() initiatorUser: UsersEntity,
+    ) {
+        const targetUser = await this.usersService.getUserById(targetUserId);
+
+        return this.retweetsService.createCreatingRetweetsRestriction(targetUser, initiatorUser);
+    }
+
     @Get('/user/:userId')
     @UseGuards(AbilityGuard)
     @CheckAbilityDecorator({ action: 'read', subject: 'retweets' })
@@ -43,6 +53,8 @@ export class RetweetsController {
     }
 
     @Post('/:recordId')
+    @UseGuards(AbilityGuard)
+    @CheckAbilityDecorator({ action: 'create', subject: 'retweets' })
     @UseInterceptors(FilesInterceptor('imageFiles'))
     public async createRetweetOnRecord(
         @Body() createRetweetDto: CreateRetweetDto,
