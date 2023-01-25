@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
+import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
 import { CreateCommentDto } from '../dto/create-comment.dto';
@@ -15,7 +16,26 @@ export class CommentsService {
         @InjectRepository(RecordsEntity) private readonly recordsTreeRepository: TreeRepository<RecordsEntity>,
         @InjectRepository(RecordImagesEntity) private readonly recordImagesRepository: Repository<RecordImagesEntity>,
         private readonly filesService: FilesService,
+        @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
+
+    public createCreatingCommentsRestriction(
+        targetUser: UsersEntity,
+        initiatorUser: UsersEntity,
+    ): Promise<RestrictionsEntity> {
+        if (targetUser.id === initiatorUser.id) {
+            throw new BadRequestException('user cannot restrict himself');
+        }
+
+        const restriction = this.restrictionsRepository.create({
+            targetUser,
+            initiatorUser,
+            action: 'create',
+            subject: 'comments',
+        });
+
+        return this.restrictionsRepository.save(restriction);
+    }
 
     public getCommentById(commentId: string): Promise<RecordsEntity | null> {
         return this.recordsTreeRepository.findOne({

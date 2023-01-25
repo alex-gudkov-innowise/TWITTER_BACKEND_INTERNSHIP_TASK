@@ -1,9 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
+import { CheckAbilityDecorator } from 'src/decorators/check-ability.decorator';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
+import { AbilityGuard } from 'src/guards/ability.guard';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
+import { UsersService } from 'src/users/services/users.service';
 
 import { CreateCommentDto } from '../dto/create-comment.dto';
 import { CommentsService } from '../services/comments.service';
@@ -12,9 +15,25 @@ import { RecordsService } from '../services/records.service';
 @UseGuards(AuthGuard)
 @Controller('comments')
 export class CommentsController {
-    constructor(private readonly recordsService: RecordsService, private readonly commentsService: CommentsService) {}
+    constructor(
+        private readonly recordsService: RecordsService,
+        private readonly commentsService: CommentsService,
+        private readonly usersService: UsersService,
+    ) {}
+
+    @Post('/restriction/read/:userId')
+    public async createCreatingCommentsRestriction(
+        @Param('userId') targetUserId: string,
+        @CurrentUserDecorator() initiatorUser: UsersEntity,
+    ) {
+        const targetUser = await this.usersService.getUserById(targetUserId);
+
+        return this.commentsService.createCreatingCommentsRestriction(targetUser, initiatorUser);
+    }
 
     @Post('/record/:recordId')
+    @UseGuards(AbilityGuard)
+    @CheckAbilityDecorator({ action: 'create', subject: 'comments' })
     @UseInterceptors(FilesInterceptor('imageFiles'))
     public async createCommentOnRecord(
         @Body() createCommentDto: CreateCommentDto,
