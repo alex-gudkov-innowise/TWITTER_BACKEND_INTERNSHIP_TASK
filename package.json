@@ -15,9 +15,7 @@
         "prettier:write": "prettier --write ./src/**/*.ts",
         "prettier:check": "prettier --check ./src/**/*.ts",
         "eslint:fix": "eslint --fix --max-warnings=0 ./src/**/*.ts",
-        "precommit": "lint-staged",
-        "typeorm": "typeorm-ts-node-commonjs",
-        "prepare": "husky install"
+        "typeorm": "typeorm-ts-node-commonjs"
     },
     "dependencies": {
         "@casl/ability": "^6.3.3",
@@ -47,14 +45,11 @@
     "devDependencies": {
         "@nestjs/cli": "^9.0.0",
         "@nestjs/schematics": "^9.0.0",
-        "@nestjs/testing": "^9.0.0",
         "@types/cache-manager-redis-store": "^2.0.1",
         "@types/express": "^4.17.13",
-        "@types/jest": "28.1.8",
         "@types/multer": "^1.4.7",
         "@types/node": "^16.18.11",
         "@types/nodemailer": "^6.4.7",
-        "@types/supertest": "^2.0.11",
         "@types/uuid": "^9.0.0",
         "@typescript-eslint/eslint-plugin": "^5.48.0",
         "@typescript-eslint/parser": "^5.48.0",
@@ -65,21 +60,11 @@
         "eslint-plugin-prettier": "^4.2.1",
         "eslint-plugin-sort-destructure-keys": "^1.4.0",
         "eslint-plugin-typescript-sort-keys": "^2.1.0",
-        "husky": "^8.0.3",
-        "lint-staged": "^13.1.0",
         "prettier": "^2.8.1",
         "source-map-support": "^0.5.20",
-        "supertest": "^6.1.3",
-        "ts-jest": "28.0.8",
         "ts-loader": "^9.2.3",
         "ts-node": "^10.0.0",
         "tsconfig-paths": "4.1.0",
         "typescript": "^4.7.4"
-    },
-    "lint-staged": {
-        "./src/**/*.ts": [
-            "prettier --write ./src/**/*.ts",
-            "eslint --fix --max-warnings=0 ./src/**/*.ts"
-        ]
     }
 }
