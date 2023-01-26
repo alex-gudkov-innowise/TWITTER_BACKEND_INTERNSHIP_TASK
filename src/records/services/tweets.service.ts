@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
+import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
-import { CreateTweetDto } from '../dtos/create-tweet.dto';
+import { CreateTweetDto } from '../dto/create-tweet.dto';
 import { RecordImagesEntity } from '../entities/record-images.entity';
 import { RecordsEntity } from '../entities/records.entity';
 
@@ -15,7 +16,26 @@ export class TweetsService {
         @InjectRepository(RecordsEntity) private readonly recordsTreeRepository: TreeRepository<RecordsEntity>,
         @InjectRepository(RecordImagesEntity) private readonly recordImagesRepository: Repository<RecordImagesEntity>,
         private readonly filesService: FilesService,
+        @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
+
+    public createReadingTweetsRestriction(
+        targetUser: UsersEntity,
+        initiatorUser: UsersEntity,
+    ): Promise<RestrictionsEntity> {
+        if (targetUser.id === initiatorUser.id) {
+            throw new BadRequestException('user cannot restrict himself');
+        }
+
+        const restriction = this.restrictionsRepository.create({
+            targetUser,
+            initiatorUser,
+            action: 'read',
+            subject: 'tweets',
+        });
+
+        return this.restrictionsRepository.save(restriction);
+    }
 
     public getAllUserTweets(user: UsersEntity): Promise<RecordsEntity[] | null> {
         if (!user) {
@@ -42,6 +62,7 @@ export class TweetsService {
             },
             relations: {
                 images: true,
+                author: true,
             },
         });
     }

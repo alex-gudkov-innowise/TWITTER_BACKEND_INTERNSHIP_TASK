@@ -3,10 +3,7 @@ import { Request } from 'express';
 
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 
-export const PrivacyInfoDecorator = createParamDecorator(function (
-    data: unknown,
-    context: ExecutionContext,
-): PrivacyInfo {
+export const PrivacyInfoDecorator = createParamDecorator((data: unknown, context: ExecutionContext): PrivacyInfo => {
     const request = context.switchToHttp().getRequest<Request>();
 
     return {
