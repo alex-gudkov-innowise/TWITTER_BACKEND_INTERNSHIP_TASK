@@ -28,9 +28,6 @@ export class AuthMiddleware implements NestMiddleware {
             }
 
             const payload = this.jwtService.verify<JwtPayloadWithUserId & JwtPayloadWithUserRole>(tokenValue);
-
-            console.log(payload);
-
             const currentUser = await this.usersService.getUserById(payload.userId);
             const currentUserRole = payload.userRole;
 
