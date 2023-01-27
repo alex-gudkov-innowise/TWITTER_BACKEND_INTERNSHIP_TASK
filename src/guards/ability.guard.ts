@@ -12,6 +12,7 @@ import { NotFoundError } from 'rxjs';
 
 import { AbilityToCheck, METADATA_KEY_CHECK_ABILITY } from 'src/decorators/check-ability.decorator';
 import { RequestWithParamsUserId } from 'src/interfaces/request-with-params.interface';
+import { RequestWithUserRole } from 'src/interfaces/request-with-user-role.interface';
 import { RequestWithUser } from 'src/interfaces/request-with-user.interface';
 import { CaslAbilityFactory } from 'src/restrictions/casl-ability.factory';
 import { UsersService } from 'src/users/services/users.service';
@@ -25,8 +26,11 @@ export class AbilityGuard implements CanActivate {
     ) {}
 
     public async canActivate(context: ExecutionContext): Promise<boolean> {
-        const request = context.switchToHttp().getRequest<RequestWithUser & RequestWithParamsUserId>();
+        const request = context
+            .switchToHttp()
+            .getRequest<RequestWithUser & RequestWithParamsUserId & RequestWithUserRole>();
         const targetUser = request.currentUser;
+        const targetUserRole = request.currentUserRole;
         const initiatorUser = await this.usersService.getUserById(request.params.userId);
         const abilityToCheck = this.reflector.get<AbilityToCheck>(METADATA_KEY_CHECK_ABILITY, context.getHandler());
 
@@ -38,7 +42,11 @@ export class AbilityGuard implements CanActivate {
             throw new NotFoundException('initiator user not found');
         }
 
-        const currentUserAbility = await this.caslAbilityFactory.defineAbility(targetUser, initiatorUser);
+        const currentUserAbility = await this.caslAbilityFactory.defineAbility(
+            targetUser,
+            initiatorUser,
+            targetUserRole,
+        );
         ForbiddenError.from(currentUserAbility).throwUnlessCan(abilityToCheck.action, abilityToCheck.subject);
 
         return true;

@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { CurrentUserRoleDecorator } from 'src/decorators/current-user.decorator copy';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
 import { RestrictionsEntity } from './restrictions.entity';
@@ -13,8 +14,10 @@ export class CaslAbilityFactory {
         @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
 
-    public async defineAbility(targetUser: UsersEntity, initiatorUser: UsersEntity) {
+    public async defineAbility(targetUser: UsersEntity, initiatorUser: UsersEntity, currentUserRole: string) {
         const { build, can, cannot } = new AbilityBuilder(createMongoAbility);
+
+        console.log(currentUserRole);
 
         const restrictions = await this.restrictionsRepository.find({
             where: {
