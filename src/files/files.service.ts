@@ -12,7 +12,7 @@ export class FilesService {
         const fileExtension = path.extname(file.originalname).toLowerCase();
 
         if (!this.isValidImageExtension(fileExtension)) {
-            throw new BadRequestException({ message: 'invalid image type' });
+            throw new BadRequestException('invalid image type');
         }
 
         const fileName = uuid.v4() + fileExtension;

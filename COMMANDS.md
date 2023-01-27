@@ -1,25 +1,29 @@
 # COMMANDS
 
-Start application in development mode 
-```
-$ npm run start:dev
+Start application in development mode
+
+```SH
+npm run start:dev
 ```
 
 ESLint packages
-```
-$ npm install -d @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint eslint-config-prettier eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint-plugin-sort-destructure-keys eslint-plugin-typescript-sort-keys prettier --save-dev
+
+```SH
+npm install -d @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint eslint-config-prettier eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint-plugin-sort-destructure-keys eslint-plugin-typescript-sort-keys prettier --save-dev
 ```
 
 Migrations commands
-```
-$ npm run typeorm migration:create -- ./migrations/<MigrationName>
-$ npm run typeorm migration:generate -- -d ./typeorm-config.ts -p ./migrations/<MigrationName>
-$ npm run typeorm migration:run -- -d ./typeorm-config.ts
-$ npm run typeorm migration:revert -- -d ./typeorm-config.ts
+
+```SH
+npm run typeorm migration:create -- ./migrations/<migration-name>
+npm run typeorm migration:generate -- -d ./typeorm-config.ts -p ./migrations/<migration-name>
+npm run typeorm migration:run -- -d ./typeorm-config.ts
+npm run typeorm migration:revert -- -d ./typeorm-config.ts
 ```
 
 PostgreSQL CLI in Docker
-```
+
+```TEXT
 $ docker exec -i -t postgres sh
 # psql -U postgres -h localhost
 postgres=# \c twitter
@@ -27,37 +31,27 @@ twitter=# \dt
 ```
 
 Redis CLI in Docker
-```
+
+```TEXT
 $ docker exec -i -t redis sh
 /data # redis-cli
 127.0.0.1:6379> keys *
 ```
 
-Built-in HTTP exceptions
-```
-BadRequestException - 400
-UnauthorizedException - 401
-NotFoundException - 404
-ForbiddenException
-NotAcceptableException
-RequestTimeoutException
-ConflictException
-GoneException
-HttpVersionNotSupportedException
-PayloadTooLargeException
-UnsupportedMediaTypeException
-UnprocessableEntityException
-InternalServerErrorException
-NotImplementedException
-ImATeapotException
-MethodNotAllowedException
-BadGatewayException
-ServiceUnavailableException
-GatewayTimeoutException
-PreconditionFailedException
+Some of HTTP exceptions
+
+```TS
+class BadRequestException {} ; // - 400
+class UnauthorizedException {} ; // - 401
+class ForbiddenException {}; // - 403
+class NotFoundException {}; // - 404
+class InternalServerErrorException {} // - 500
 ```
 
-Additional settings
+Code linting settings
+
+##### settings.json
+
 ```JSON
 {
     "editor.formatOnPaste": false,
