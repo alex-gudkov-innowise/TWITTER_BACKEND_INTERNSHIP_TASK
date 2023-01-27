@@ -302,7 +302,12 @@ export class AuthService {
 
     public async getNewAccessToken(refreshTokenValue: string) {
         const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
+
         if (!refreshToken) {
+            throw new UnauthorizedException('refresh token not exist');
+        }
+
+        if (refreshToken.value !== refreshTokenValue) {
             throw new UnauthorizedException('invalid refresh token');
         }
 
@@ -313,9 +318,14 @@ export class AuthService {
         }
 
         const user = await this.usersService.getUserById(userSession.userId);
+        const accessToken = this.createAccessToken(user);
+
+        refreshToken.value = uuid.v4();
+        this.refreshTokensRepository.save(refreshToken);
 
         return {
-            accessToken: this.createAccessToken(user),
+            accessToken,
+            refreshToken: refreshToken.value,
         };
     }
 }
