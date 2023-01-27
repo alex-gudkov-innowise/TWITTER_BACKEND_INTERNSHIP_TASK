@@ -15,14 +15,14 @@ export class CaslAbilityFactory {
         @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
 
-    public async defineAbility(targetUser: UsersEntity, initiatorUser: UsersEntity, targetUserRole: string) {
+    public async defineAbility(targetUser: UsersEntity, initiatorUser: UsersEntity, targetUserRoles: string[]) {
         const { build, can, cannot } = new AbilityBuilder(createMongoAbility);
 
         defaultPermissions.forEach((defaultPermission: Permission) => {
             can(defaultPermission.action, defaultPermission.subject);
         });
 
-        if (targetUserRole === 'admin') {
+        if (targetUserRoles.includes('admin')) {
             can('delete', 'users');
 
             return build();

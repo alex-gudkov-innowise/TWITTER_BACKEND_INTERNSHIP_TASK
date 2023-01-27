@@ -66,7 +66,8 @@ export class AuthService {
             password: hashedPassword,
         });
 
-        const accessToken = this.createAccessToken(user);
+        const userRoles = ['user'];
+        const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
 
@@ -269,14 +270,14 @@ export class AuthService {
         });
     }
 
-    private createAccessToken(user: UsersEntity, userRole = 'user'): string {
+    private createAccessToken(user: UsersEntity, userRoles: string[] = ['user']): string {
         if (!user) {
             throw new NotFoundException('user not found');
         }
 
         const payload = {
             userId: user.id,
-            userRole,
+            userRoles,
         };
         const accessToken = this.jwtService.sign(payload);
 
