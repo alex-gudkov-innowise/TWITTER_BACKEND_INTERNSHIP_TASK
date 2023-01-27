@@ -269,13 +269,14 @@ export class AuthService {
         });
     }
 
-    private createAccessToken(user: UsersEntity): string {
+    private createAccessToken(user: UsersEntity, userRole = 'user'): string {
         if (!user) {
             throw new NotFoundException('user not found');
         }
 
         const payload = {
             userId: user.id,
+            userRole,
         };
         const accessToken = this.jwtService.sign(payload);
 
