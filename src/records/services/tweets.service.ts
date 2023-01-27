@@ -39,7 +39,7 @@ export class TweetsService {
 
     public getAllUserTweets(user: UsersEntity): Promise<RecordsEntity[] | null> {
         if (!user) {
-            throw new NotFoundException({ message: 'user not found' });
+            throw new NotFoundException('user not found');
         }
 
         return this.recordsTreeRepository.find({
@@ -96,7 +96,7 @@ export class TweetsService {
 
     public async removeTweet(tweet: RecordsEntity) {
         if (!tweet) {
-            throw new NotFoundException({ message: 'tweet not found' });
+            throw new NotFoundException('tweet not found');
         }
 
         const tweetImages = await this.recordImagesRepository

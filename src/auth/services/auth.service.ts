@@ -42,7 +42,7 @@ export class AuthService {
     public async signUpUser(signUpUserDto: SignUpUserDto): Promise<SentMessageInfo> {
         const candidateUser = await this.usersService.getUserByEmail(signUpUserDto.email);
         if (candidateUser) {
-            throw new BadRequestException({ message: 'user already exists' });
+            throw new BadRequestException('user already exists');
         }
 
         const verificationCode = crypto.randomBytes(3).toString('hex');
@@ -55,7 +55,7 @@ export class AuthService {
         const signUpUserDto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
 
         if (!signUpUserDto) {
-            throw new BadRequestException({ message: 'invalid verification code' });
+            throw new BadRequestException('invalid verification code');
         }
 
         await this.cacheManager.del(verificationCode);
@@ -81,12 +81,12 @@ export class AuthService {
     public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
         const user = await this.usersService.getUserByEmail(signInUserDto.email);
         if (!user) {
-            throw new NotFoundException({ message: 'user not found' });
+            throw new NotFoundException('user not found');
         }
 
         const comparedPasswords = await bcryptjs.compare(signInUserDto.password, user.password);
         if (!comparedPasswords) {
-            throw new UnauthorizedException({ message: 'wrong password' });
+            throw new UnauthorizedException('wrong password');
         }
 
         const accessToken = this.createAccessToken(user);
@@ -113,7 +113,7 @@ export class AuthService {
 
     private async createUserSession(user: UsersEntity, privacyInfo: PrivacyInfo): Promise<UserSessionEntity> {
         if (!user) {
-            throw new NotFoundException({ message: 'user not found' });
+            throw new NotFoundException('user not found');
         }
 
         const userSession: UserSessionEntity = {
@@ -131,7 +131,7 @@ export class AuthService {
 
     public async getAllUserSessions(user: UsersEntity): Promise<UserSessionEntity[]> {
         if (!user) {
-            throw new NotFoundException({ message: 'user not found' });
+            throw new NotFoundException('user not found');
         }
 
         const usersRefreshTokens = await this.refreshTokensRepository.findBy({ user });
@@ -182,7 +182,7 @@ export class AuthService {
 
     public async deleteAllUserSessions(user: UsersEntity): Promise<void> {
         if (!user) {
-            throw new NotFoundException({ message: 'user not found' });
+            throw new NotFoundException('user not found');
         }
 
         const usersRefreshTokens = await this.refreshTokensRepository.findBy({ user });
@@ -271,7 +271,7 @@ export class AuthService {
 
     private createAccessToken(user: UsersEntity): string {
         if (!user) {
-            throw new NotFoundException({ message: 'user not found' });
+            throw new NotFoundException('user not found');
         }
 
         const payload = {
@@ -284,11 +284,11 @@ export class AuthService {
 
     private createRefreshToken(user: UsersEntity, userSession: UserSessionEntity): Promise<RefreshTokensEntity> {
         if (!user) {
-            throw new NotFoundException({ message: 'user not found' });
+            throw new NotFoundException('user not found');
         }
 
         if (!userSession) {
-            throw new NotFoundException({ message: 'user session not found' });
+            throw new NotFoundException('user session not found');
         }
 
         const refreshToken = this.refreshTokensRepository.create({
@@ -303,13 +303,13 @@ export class AuthService {
     public async getNewAccessToken(refreshTokenValue: string) {
         const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
         if (!refreshToken) {
-            throw new UnauthorizedException({ message: 'invalid refresh token' });
+            throw new UnauthorizedException('invalid refresh token');
         }
 
         const userSession = await this.cacheManager.get<UserSessionEntity>(refreshToken.sessionId);
 
         if (!userSession) {
-            throw new NotFoundException({ message: 'user session not found' });
+            throw new NotFoundException('user session not found');
         }
 
         const user = await this.usersService.getUserById(userSession.userId);

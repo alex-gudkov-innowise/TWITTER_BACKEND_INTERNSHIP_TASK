@@ -113,7 +113,7 @@ export class CommentsService {
 
     public async removeComment(comment: RecordsEntity) {
         if (!comment) {
-            throw new NotFoundException({ message: 'comment not found' });
+            throw new NotFoundException('comment not found');
         }
 
         const commentImages = await this.recordImagesRepository
