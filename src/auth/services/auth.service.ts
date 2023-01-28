@@ -14,7 +14,7 @@ import * as bcryptjs from 'bcryptjs';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { SentMessageInfo } from 'nodemailer';
-import { Repository, ReturningStatementNotSupportedError } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as uuid from 'uuid';
 
 import { JwtTokensPair } from 'src/interfaces/jwt-tokens-pair.interface';
@@ -25,7 +25,6 @@ import { UsersService } from 'src/users/services/users.service';
 
 import { SignInUserDto } from '../dto/sign-in-user.dto';
 import { SignUpUserDto } from '../dto/sign-up-user.dto';
-import { TokensPairDto } from '../dto/tokens-pair.dto';
 import { RefreshTokensEntity } from '../entities/refresh-tokens.entity';
 import { UsersRolesEntity } from '../entities/users-roles.entity';
 
@@ -89,19 +88,8 @@ export class AuthService {
         };
     }
 
-    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
-        const user = await this.usersService.getUserByEmail(signInUserDto.email);
-
-        if (!user) {
-            throw new NotFoundException('user not found');
-        }
-
-        const comparedPasswords = await bcryptjs.compare(signInUserDto.password, user.password);
-
-        if (!comparedPasswords) {
-            throw new UnauthorizedException('wrong password');
-        }
-
+    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<JwtTokensPair> {
+        const user = await this.validateUser(signInUserDto);
         const userRoles = await this.getUserRoles(user);
         const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
@@ -114,6 +102,22 @@ export class AuthService {
             accessToken,
             refreshToken: refreshToken.value,
         };
+    }
+
+    public async validateUser(signInUserDto: SignInUserDto): Promise<UsersEntity> {
+        const user = await this.usersService.getUserByEmail(signInUserDto.email);
+
+        if (!user) {
+            throw new NotFoundException('user not found');
+        }
+
+        const isComparedPasswords = await bcryptjs.compare(signInUserDto.password, user.password);
+
+        if (!isComparedPasswords) {
+            throw new UnauthorizedException('wrong password');
+        }
+
+        return user;
     }
 
     public async signOutUser(refreshTokenValue: string): Promise<RefreshTokensEntity> {

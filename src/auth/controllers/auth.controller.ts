@@ -23,11 +23,11 @@ export class AuthController {
     }
 
     @Post('/confirm-email')
-    public confirmEmailAndRegisterUser(
+    public async confirmEmailAndRegisterUser(
         @Query('verificationCode') verificationCode: string,
         @PrivacyInfoDecorator() privacyInfo: PrivacyInfo,
     ) {
-        const signUpUserDto = this.authService.confirmEmailAndGetSignUpUserDto(verificationCode);
+        const signUpUserDto = await this.authService.confirmEmailAndGetSignUpUserDto(verificationCode);
 
         return this.authService.registerUser(signUpUserDto, privacyInfo);
     }
