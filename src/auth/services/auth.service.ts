@@ -26,6 +26,7 @@ import { SignInUserDto } from '../dto/sign-in-user.dto';
 import { SignUpUserDto } from '../dto/sign-up-user.dto';
 import { TokensPairDto } from '../dto/tokens-pair.dto';
 import { RefreshTokensEntity } from '../entities/refresh-tokens.entity';
+import { UsersRolesEntity } from '../entities/users-roles.entity';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,8 @@ export class AuthService {
         private readonly refreshTokensRepository: Repository<RefreshTokensEntity>,
         private readonly mailerService: MailerService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+        @InjectRepository(UsersRolesEntity)
+        private readonly usersRolesRepository: Repository<UsersRolesEntity>,
     ) {}
 
     public async signUpUser(signUpUserDto: SignUpUserDto): Promise<SentMessageInfo> {
@@ -66,7 +69,8 @@ export class AuthService {
             password: hashedPassword,
         });
 
-        const accessToken = this.createAccessToken(user);
+        const userRoles = ['user'];
+        const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
 
@@ -80,21 +84,23 @@ export class AuthService {
 
     public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
         const user = await this.usersService.getUserByEmail(signInUserDto.email);
+
         if (!user) {
             throw new NotFoundException('user not found');
         }
 
         const comparedPasswords = await bcryptjs.compare(signInUserDto.password, user.password);
+
         if (!comparedPasswords) {
             throw new UnauthorizedException('wrong password');
         }
 
-        const accessToken = this.createAccessToken(user);
+        const userRoles = await this.getUserRoles(user);
+        const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
 
         await this.deleteExtraUserSessions(user);
-
         await this.sendLoginNotificationEmail(signInUserDto.email, privacyInfo);
 
         return {
@@ -269,13 +275,20 @@ export class AuthService {
         });
     }
 
-    private createAccessToken(user: UsersEntity): string {
+    private async getUserRoles(user: UsersEntity): Promise<string[]> {
+        const userRoles = await this.usersRolesRepository.findBy({ user });
+
+        return userRoles.map((userRole: UsersRolesEntity): string => userRole.role);
+    }
+
+    private createAccessToken(user: UsersEntity, userRoles: string[]): string {
         if (!user) {
             throw new NotFoundException('user not found');
         }
 
         const payload = {
             userId: user.id,
+            userRoles,
         };
         const accessToken = this.jwtService.sign(payload);
 
@@ -302,7 +315,12 @@ export class AuthService {
 
     public async getNewAccessToken(refreshTokenValue: string) {
         const refreshToken = await this.refreshTokensRepository.findOneBy({ value: refreshTokenValue });
+
         if (!refreshToken) {
+            throw new UnauthorizedException('refresh token not exist');
+        }
+
+        if (refreshToken.value !== refreshTokenValue) {
             throw new UnauthorizedException('invalid refresh token');
         }
 
@@ -313,9 +331,15 @@ export class AuthService {
         }
 
         const user = await this.usersService.getUserById(userSession.userId);
+        const userRoles = await this.getUserRoles(user);
+        const accessToken = this.createAccessToken(user, userRoles);
+
+        refreshToken.value = uuid.v4();
+        this.refreshTokensRepository.save(refreshToken);
 
         return {
-            accessToken: this.createAccessToken(user),
+            accessToken,
+            refreshToken: refreshToken.value,
         };
     }
 }

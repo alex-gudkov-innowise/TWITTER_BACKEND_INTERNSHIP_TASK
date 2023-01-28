@@ -10,6 +10,7 @@ import { UsersModule } from 'src/users/users.module';
 
 import { AuthController } from './controllers/auth.controller';
 import { RefreshTokensEntity } from './entities/refresh-tokens.entity';
+import { UsersRolesEntity } from './entities/users-roles.entity';
 import { AuthService } from './services/auth.service';
 
 @Module({
@@ -18,7 +19,7 @@ import { AuthService } from './services/auth.service';
     imports: [
         UsersModule,
         JwtModule.registerAsync({ useClass: JwtConfig }),
-        TypeOrmModule.forFeature([RefreshTokensEntity, UsersEntity]),
+        TypeOrmModule.forFeature([RefreshTokensEntity, UsersEntity, UsersRolesEntity]),
         MailerModule,
         CacheModule.registerAsync({ useClass: CacheConfig }),
     ],
