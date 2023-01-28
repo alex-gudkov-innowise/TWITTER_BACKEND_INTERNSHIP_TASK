@@ -14,9 +14,10 @@ import * as bcryptjs from 'bcryptjs';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { SentMessageInfo } from 'nodemailer';
-import { Repository } from 'typeorm';
+import { Repository, ReturningStatementNotSupportedError } from 'typeorm';
 import * as uuid from 'uuid';
 
+import { JwtTokensPair } from 'src/interfaces/jwt-tokens-pair.interface';
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
 import { UsersEntity } from 'src/users/entities/users.entity';
@@ -54,7 +55,7 @@ export class AuthService {
         return this.sendConfirmationEmail(signUpUserDto.email, verificationCode);
     }
 
-    public async confirmEmail(verificationCode: string, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
+    public async confirmEmailAndGetSignUpUserDto(verificationCode: string): Promise<SignUpUserDto> {
         const signUpUserDto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
 
         if (!signUpUserDto) {
@@ -63,13 +64,19 @@ export class AuthService {
 
         await this.cacheManager.del(verificationCode);
 
+        return signUpUserDto;
+    }
+
+    public async registerUser(
+        signUpUserDto: SignUpUserDto,
+        privacyInfo: PrivacyInfo,
+        userRoles: string[] = ['user'],
+    ): Promise<JwtTokensPair> {
         const hashedPassword = await bcryptjs.hash(signUpUserDto.password, 4);
         const user = await this.usersService.createUser({
             ...signUpUserDto,
             password: hashedPassword,
         });
-
-        const userRoles = ['user'];
         const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
