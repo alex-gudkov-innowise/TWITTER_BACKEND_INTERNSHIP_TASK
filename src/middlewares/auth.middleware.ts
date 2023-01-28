@@ -14,7 +14,6 @@ export class AuthMiddleware implements NestMiddleware {
 
     public async use(request: RequestWithUser & RequestWithUserRoles, response: Response, next: NextFunction) {
         try {
-            // get token from authorization header
             const authorizationHeader = request.headers.authorization;
 
             if (!authorizationHeader) {
@@ -31,7 +30,6 @@ export class AuthMiddleware implements NestMiddleware {
             const currentUser = await this.usersService.getUserById(payload.userId);
             const currentUserRoles = payload.userRoles;
 
-            // put current user info inside request object for further using
             request.currentUser = currentUser;
             request.currentUserRoles = currentUserRoles;
         } catch (error) {

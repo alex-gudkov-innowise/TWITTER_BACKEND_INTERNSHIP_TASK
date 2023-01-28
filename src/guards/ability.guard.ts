@@ -1,15 +1,5 @@
-import { ForbiddenError } from '@casl/ability';
-import {
-    BadRequestException,
-    CanActivate,
-    ExecutionContext,
-    ForbiddenException,
-    Injectable,
-    NotFoundException,
-    UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { NotFoundError } from 'rxjs';
 
 import { AbilityToCheck, METADATA_KEY_CHECK_ABILITY } from 'src/decorators/check-ability.decorator';
 import { RequestWithParamsUserId } from 'src/interfaces/request-with-params.interface';

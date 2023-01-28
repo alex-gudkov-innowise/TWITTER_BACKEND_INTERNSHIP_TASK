@@ -14,7 +14,7 @@ import * as bcryptjs from 'bcryptjs';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { SentMessageInfo } from 'nodemailer';
-import { Repository, UsingJoinColumnOnlyOnOneSideAllowedError } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as uuid from 'uuid';
 
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
