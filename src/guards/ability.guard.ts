@@ -3,6 +3,7 @@ import {
     BadRequestException,
     CanActivate,
     ExecutionContext,
+    ForbiddenException,
     Injectable,
     NotFoundException,
     UnauthorizedException,
@@ -47,8 +48,13 @@ export class AbilityGuard implements CanActivate {
             initiatorUser,
             targetUserRoles,
         );
+        const isCurrentUserCan = currentUserAbility.can(abilityToCheck.action, abilityToCheck.subject);
 
-        ForbiddenError.from(currentUserAbility).throwUnlessCan(abilityToCheck.action, abilityToCheck.subject);
+        if (!isCurrentUserCan) {
+            throw new ForbiddenException(
+                `cannot do action(${abilityToCheck.action}) on subject(${abilityToCheck.subject})`,
+            );
+        }
 
         return true;
     }
