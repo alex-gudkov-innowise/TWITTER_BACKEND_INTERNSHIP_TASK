@@ -10,6 +10,7 @@ import { UsersEntity } from 'src/users/entities/users.entity';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { SignInUserDto } from '../dto/sign-in-user.dto';
 import { SignUpUserDto } from '../dto/sign-up-user.dto';
+import { VerificationCodeDto } from '../dto/verification-code.dto';
 import { AuthService } from '../services/auth.service';
 
 @Controller('/auth')
@@ -24,10 +25,10 @@ export class AuthController {
 
     @Post('/confirm-email')
     public async confirmEmailAndRegisterUser(
-        @Query('verificationCode') verificationCode: string,
+        @Body() verificationCodeDto: VerificationCodeDto,
         @PrivacyInfoDecorator() privacyInfo: PrivacyInfo,
     ) {
-        const signUpUserDto = await this.authService.confirmEmailAndGetSignUpUserDto(verificationCode);
+        const signUpUserDto = await this.authService.confirmEmailAndGetSignUpUserDto(verificationCodeDto.value);
 
         return this.authService.registerUser(signUpUserDto, privacyInfo);
     }
