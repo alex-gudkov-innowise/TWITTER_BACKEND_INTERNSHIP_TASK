@@ -3,8 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { Permission } from 'src/interfaces/permission.interface';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
+import { defaultPermissions } from './default-permissions';
 import { RestrictionsEntity } from './restrictions.entity';
 
 @Injectable()
@@ -13,8 +15,22 @@ export class CaslAbilityFactory {
         @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
 
-    public async defineAbility(targetUser: UsersEntity, initiatorUser: UsersEntity) {
+    public async defineAbility(targetUser: UsersEntity, initiatorUser: UsersEntity, targetUserRoles: string[]) {
         const { build, can, cannot } = new AbilityBuilder(createMongoAbility);
+
+        defaultPermissions.forEach((defaultPermission: Permission) => {
+            can(defaultPermission.action, defaultPermission.subject);
+        });
+
+        if (targetUserRoles.includes('admin')) {
+            can('delete', 'users');
+
+            return build();
+        }
+
+        if (targetUser.id === initiatorUser.id) {
+            can('delete', 'users');
+        }
 
         const restrictions = await this.restrictionsRepository.find({
             where: {
@@ -23,18 +39,9 @@ export class CaslAbilityFactory {
             },
         });
 
-        can('read', 'tweets');
-        can('read', 'retweets');
-        can('create', 'retweets');
-        can('create', 'comments');
-
-        restrictions.forEach((restrictions) => {
-            cannot(restrictions.action, restrictions.subject);
+        restrictions.forEach((restriction: RestrictionsEntity) => {
+            cannot(restriction.action, restriction.subject);
         });
-
-        if (targetUser.id === initiatorUser.id) {
-            can('delete', 'users');
-        }
 
         return build();
     }
