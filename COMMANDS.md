@@ -16,9 +16,9 @@ Migrations commands
 
 ```SH
 npm run typeorm migration:create -- ./migrations/<migration-name>
-npm run typeorm migration:generate -- -d ./typeorm-config.ts -p ./migrations/<migration-name>
-npm run typeorm migration:run -- -d ./typeorm-config.ts
-npm run typeorm migration:revert -- -d ./typeorm-config.ts
+npm run typeorm migration:generate -- -d ./src/configs/typeorm-config.ts -p ./migrations/<migration-name>
+npm run typeorm migration:run -- -d ./src/configs/typeorm-config.ts
+npm run typeorm migration:revert -- -d ./src/configs/typeorm-config.ts
 ```
 
 PostgreSQL CLI in Docker
