@@ -14,7 +14,7 @@ import * as bcryptjs from 'bcryptjs';
 import { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import { SentMessageInfo } from 'nodemailer';
-import { Repository } from 'typeorm';
+import { Repository, UsingJoinColumnOnlyOnOneSideAllowedError } from 'typeorm';
 import * as uuid from 'uuid';
 
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
@@ -26,6 +26,7 @@ import { SignInUserDto } from '../dto/sign-in-user.dto';
 import { SignUpUserDto } from '../dto/sign-up-user.dto';
 import { TokensPairDto } from '../dto/tokens-pair.dto';
 import { RefreshTokensEntity } from '../entities/refresh-tokens.entity';
+import { UsersRolesEntity } from '../entities/users-roles.entity';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,8 @@ export class AuthService {
         private readonly refreshTokensRepository: Repository<RefreshTokensEntity>,
         private readonly mailerService: MailerService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+        @InjectRepository(UsersRolesEntity)
+        private readonly usersRolesRepository: Repository<UsersRolesEntity>,
     ) {}
 
     public async signUpUser(signUpUserDto: SignUpUserDto): Promise<SentMessageInfo> {
@@ -81,21 +84,23 @@ export class AuthService {
 
     public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
         const user = await this.usersService.getUserByEmail(signInUserDto.email);
+
         if (!user) {
             throw new NotFoundException('user not found');
         }
 
         const comparedPasswords = await bcryptjs.compare(signInUserDto.password, user.password);
+
         if (!comparedPasswords) {
             throw new UnauthorizedException('wrong password');
         }
 
-        const accessToken = this.createAccessToken(user);
+        const userRoles = await this.getUserRoles(user);
+        const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
 
         await this.deleteExtraUserSessions(user);
-
         await this.sendLoginNotificationEmail(signInUserDto.email, privacyInfo);
 
         return {
@@ -270,7 +275,13 @@ export class AuthService {
         });
     }
 
-    private createAccessToken(user: UsersEntity, userRoles: string[] = ['user']): string {
+    private async getUserRoles(user: UsersEntity): Promise<string[]> {
+        const userRoles = await this.usersRolesRepository.findBy({ user });
+
+        return userRoles.map((userRole: UsersRolesEntity): string => userRole.role);
+    }
+
+    private createAccessToken(user: UsersEntity, userRoles: string[]): string {
         if (!user) {
             throw new NotFoundException('user not found');
         }
@@ -320,7 +331,8 @@ export class AuthService {
         }
 
         const user = await this.usersService.getUserById(userSession.userId);
-        const accessToken = this.createAccessToken(user);
+        const userRoles = await this.getUserRoles(user);
+        const accessToken = this.createAccessToken(user, userRoles);
 
         refreshToken.value = uuid.v4();
         this.refreshTokensRepository.save(refreshToken);

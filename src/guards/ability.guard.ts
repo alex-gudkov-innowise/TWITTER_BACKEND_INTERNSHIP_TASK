@@ -47,6 +47,7 @@ export class AbilityGuard implements CanActivate {
             initiatorUser,
             targetUserRoles,
         );
+
         ForbiddenError.from(currentUserAbility).throwUnlessCan(abilityToCheck.action, abilityToCheck.subject);
 
         return true;
