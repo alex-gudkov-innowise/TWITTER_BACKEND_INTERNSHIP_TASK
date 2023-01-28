@@ -5,12 +5,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { TypeOrmConfig } from 'src/configs/typeorm-config';
+import { TypeOrmConfig } from 'configs/typeorm-config';
+
+import { JwtConfig } from '../configs/jwt-config';
+import { MailerConfig } from '../configs/mailer-config';
+import { ServeStaticConfig } from '../configs/serve-static-config';
 
 import { AuthModule } from './auth/auth.module';
-import { JwtConfig } from './configs/jwt-config';
-import { MailerConfig } from './configs/mailer-config';
-import { ServeStaticConfig } from './configs/serve-static-config';
 import { FilesModule } from './files/files.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { CommentsController } from './records/controllers/comments.controller';

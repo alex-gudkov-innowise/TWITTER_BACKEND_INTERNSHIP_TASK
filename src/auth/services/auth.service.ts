@@ -17,6 +17,7 @@ import { SentMessageInfo } from 'nodemailer';
 import { Repository } from 'typeorm';
 import * as uuid from 'uuid';
 
+import { JwtTokensPair } from 'src/interfaces/jwt-tokens-pair.interface';
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
 import { UsersEntity } from 'src/users/entities/users.entity';
@@ -24,7 +25,6 @@ import { UsersService } from 'src/users/services/users.service';
 
 import { SignInUserDto } from '../dto/sign-in-user.dto';
 import { SignUpUserDto } from '../dto/sign-up-user.dto';
-import { TokensPairDto } from '../dto/tokens-pair.dto';
 import { RefreshTokensEntity } from '../entities/refresh-tokens.entity';
 import { UsersRolesEntity } from '../entities/users-roles.entity';
 
@@ -54,7 +54,7 @@ export class AuthService {
         return this.sendConfirmationEmail(signUpUserDto.email, verificationCode);
     }
 
-    public async confirmEmail(verificationCode: string, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
+    public async confirmEmailAndGetSignUpUserDto(verificationCode: string): Promise<SignUpUserDto> {
         const signUpUserDto = await this.cacheManager.get<SignUpUserDto>(verificationCode);
 
         if (!signUpUserDto) {
@@ -63,13 +63,19 @@ export class AuthService {
 
         await this.cacheManager.del(verificationCode);
 
+        return signUpUserDto;
+    }
+
+    public async registerUser(
+        signUpUserDto: SignUpUserDto,
+        privacyInfo: PrivacyInfo,
+        userRoles: string[] = ['user'],
+    ): Promise<JwtTokensPair> {
         const hashedPassword = await bcryptjs.hash(signUpUserDto.password, 4);
         const user = await this.usersService.createUser({
             ...signUpUserDto,
             password: hashedPassword,
         });
-
-        const userRoles = ['user'];
         const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
@@ -82,19 +88,8 @@ export class AuthService {
         };
     }
 
-    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<TokensPairDto> {
-        const user = await this.usersService.getUserByEmail(signInUserDto.email);
-
-        if (!user) {
-            throw new NotFoundException('user not found');
-        }
-
-        const comparedPasswords = await bcryptjs.compare(signInUserDto.password, user.password);
-
-        if (!comparedPasswords) {
-            throw new UnauthorizedException('wrong password');
-        }
-
+    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<JwtTokensPair> {
+        const user = await this.validateUser(signInUserDto);
         const userRoles = await this.getUserRoles(user);
         const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
@@ -107,6 +102,22 @@ export class AuthService {
             accessToken,
             refreshToken: refreshToken.value,
         };
+    }
+
+    public async validateUser(signInUserDto: SignInUserDto): Promise<UsersEntity> {
+        const user = await this.usersService.getUserByEmail(signInUserDto.email);
+
+        if (!user) {
+            throw new NotFoundException('user not found');
+        }
+
+        const isComparedPasswords = await bcryptjs.compare(signInUserDto.password, user.password);
+
+        if (!isComparedPasswords) {
+            throw new UnauthorizedException('wrong password');
+        }
+
+        return user;
     }
 
     public async signOutUser(refreshTokenValue: string): Promise<RefreshTokensEntity> {

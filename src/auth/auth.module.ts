@@ -3,8 +3,8 @@ import { CacheModule, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { CacheConfig } from 'src/configs/cache-config';
-import { JwtConfig } from 'src/configs/jwt-config';
+import { CacheConfig } from 'configs/cache-config';
+import { JwtConfig } from 'configs/jwt-config';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersModule } from 'src/users/users.module';
 
