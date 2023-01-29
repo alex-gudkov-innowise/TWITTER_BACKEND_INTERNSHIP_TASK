@@ -63,6 +63,22 @@ export class CaslAbilityFactory {
         return this.defineOwnerAbility(targetUser, targetUserRoles, initiatorUser, 'delete', 'tweets');
     }
 
+    public defineAbilityToDeleteComments(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): PureAbility {
+        return this.defineOwnerAbility(targetUser, targetUserRoles, initiatorUser, 'delete', 'comments');
+    }
+
+    public defineAbilityToDeleteRetweets(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): PureAbility {
+        return this.defineOwnerAbility(targetUser, targetUserRoles, initiatorUser, 'delete', 'retweets');
+    }
+
     public defineOwnerAbility(
         targetUser: UsersEntity,
         targetUserRoles: Array<string>,

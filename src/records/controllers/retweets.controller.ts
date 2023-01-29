@@ -1,8 +1,11 @@
+import { ForbiddenError } from '@casl/ability';
 import { Body, Controller, Delete, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
+import { CurrentUserRolesDecorator } from 'src/decorators/current-user-roles.decorator';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { CaslAbilityFactory } from 'src/restrictions/casl-ability.factory';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/services/users.service';
 
@@ -16,9 +19,9 @@ import { TweetsService } from '../services/tweets.service';
 export class RetweetsController {
     constructor(
         private readonly recordsService: RecordsService,
-        private readonly tweetsService: TweetsService,
         private readonly retweetsService: RetweetsService,
         private readonly usersService: UsersService,
+        private readonly caslAbilityFactory: CaslAbilityFactory,
     ) {}
 
     @Post('/restriction/read/:userId')
@@ -67,9 +70,20 @@ export class RetweetsController {
     }
 
     @Delete('/:retweetId')
-    public async removeRetweet(@Param('retweetId') retweetId: string) {
-        const retweet = await this.tweetsService.getTweetById(retweetId);
+    public async deleteRetweetById(
+        @Param('retweetId') retweetId: string,
+        @CurrentUserDecorator() currentUser: UsersEntity,
+        @CurrentUserRolesDecorator() currentUserRoles: string[],
+    ) {
+        const retweet = await this.retweetsService.getRetweetByIdOrThrow(retweetId);
+        const currentUserAbility = this.caslAbilityFactory.defineAbilityToDeleteRetweets(
+            currentUser,
+            currentUserRoles,
+            retweet.author,
+        );
 
-        return this.retweetsService.removeRetweet(retweet);
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('delete', 'retweets');
+
+        return this.retweetsService.deleteRetweet(retweet);
     }
 }

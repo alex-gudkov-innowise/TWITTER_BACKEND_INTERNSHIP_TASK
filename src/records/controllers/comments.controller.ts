@@ -107,13 +107,13 @@ export class CommentsController {
         @CurrentUserRolesDecorator() currentUserRoles: string[],
     ) {
         const comment = await this.commentsService.getCommentByIdOrThrow(commentId);
-        const currentUserAbility = this.caslAbilityFactory.defineAbilityToDeleteTweets(
+        const currentUserAbility = this.caslAbilityFactory.defineAbilityToDeleteComments(
             currentUser,
             currentUserRoles,
             comment.author,
         );
 
-        ForbiddenError.from(currentUserAbility).throwUnlessCan('delete', 'tweets');
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('delete', 'comments');
 
         return this.commentsService.clearCommentAndMarkAsDeleted(comment);
     }

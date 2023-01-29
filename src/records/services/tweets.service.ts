@@ -124,9 +124,9 @@ export class TweetsService {
             .where(`record_images."recordId" = :tweetId`, { tweetId: tweet.id })
             .getMany();
 
-        tweetImages.forEach((tweetImage: RecordImagesEntity) => {
+        tweetImages.forEach(async (tweetImage: RecordImagesEntity) => {
             this.filesService.removeImageFile(tweetImage.name);
-            this.recordImagesRepository.delete(tweetImage);
+            await this.recordImagesRepository.delete(tweetImage);
         });
 
         return this.recordsTreeRepository.delete(tweet);

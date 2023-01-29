@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, TreeRepository } from 'typeorm';
+import { DeleteResult, Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
 import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
@@ -80,9 +80,30 @@ export class RetweetsService {
                 isComment: false,
             },
             relations: {
+                author: true,
                 images: true,
             },
         });
+    }
+
+    public async getRetweetByIdOrThrow(retweetId: string): Promise<RecordsEntity> {
+        const retweet = await this.recordsTreeRepository.findOne({
+            where: {
+                id: retweetId,
+                isRetweet: true,
+                isComment: false,
+            },
+            relations: {
+                author: true,
+                images: true,
+            },
+        });
+
+        if (!retweet) {
+            throw new NotFoundException('retweet not found');
+        }
+
+        return retweet;
     }
 
     public async createRetweetOnRecord(
@@ -118,7 +139,7 @@ export class RetweetsService {
         return retweet;
     }
 
-    public async removeRetweet(retweet: RecordsEntity) {
+    public async deleteRetweet(retweet: RecordsEntity): Promise<DeleteResult> {
         if (!retweet) {
             throw new NotFoundException('retweet not found');
         }
@@ -128,12 +149,11 @@ export class RetweetsService {
             .where(`record_images."recordId" = :retweetId`, { retweetId: retweet.id })
             .getMany();
 
-        retweetImages.forEach((recordImage: RecordImagesEntity) => {
-            this.filesService.removeImageFile(recordImage.name);
+        retweetImages.forEach(async (retweetImage: RecordImagesEntity) => {
+            this.filesService.removeImageFile(retweetImage.name);
+            await this.recordImagesRepository.remove(retweetImages);
         });
 
-        await this.recordImagesRepository.remove(retweetImages);
-
-        return this.recordsTreeRepository.remove(retweet);
+        return this.recordsTreeRepository.delete(retweet);
     }
 }
