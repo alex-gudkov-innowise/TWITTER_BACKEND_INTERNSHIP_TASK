@@ -55,6 +55,34 @@ export class CaslAbilityFactory {
         return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'create', 'retweets');
     }
 
+    public defineAbilityToDeleteTweets(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): PureAbility {
+        return this.defineOwnerAbility(targetUser, targetUserRoles, initiatorUser, 'delete', 'tweets');
+    }
+
+    public defineOwnerAbility(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+        action: string,
+        subject: string,
+    ): PureAbility {
+        const { build, can } = new AbilityBuilder<MongoAbility>(createMongoAbility);
+
+        if (targetUserRoles.includes('admin')) {
+            can(action, subject);
+        } else {
+            if (targetUser.id === initiatorUser.id) {
+                can(action, subject);
+            }
+        }
+
+        return build();
+    }
+
     public async defineVisitorAbility(
         targetUser: UsersEntity,
         targetUserRoles: Array<string>,
