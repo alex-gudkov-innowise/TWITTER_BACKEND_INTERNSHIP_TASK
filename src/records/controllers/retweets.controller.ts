@@ -1,5 +1,16 @@
-import { ForbiddenError } from '@casl/ability';
-import { Body, Controller, Delete, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { AbilityBuilder, ForbiddenError } from '@casl/ability';
+import {
+    Body,
+    Controller,
+    Delete,
+    ForbiddenException,
+    Get,
+    Param,
+    Post,
+    UploadedFiles,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
 import { CurrentUserRolesDecorator } from 'src/decorators/current-user-roles.decorator';
@@ -45,8 +56,19 @@ export class RetweetsController {
     }
 
     @Get('/user/:userId')
-    public async getUserRetweets(@Param('userId') userId: string) {
+    public async getUserRetweets(
+        @Param('userId') userId: string,
+        @CurrentUserDecorator() currentUser: UsersEntity,
+        @CurrentUserRolesDecorator() currentUserRoles: string[],
+    ) {
         const user = await this.usersService.getUserById(userId);
+        const currentUserAbility = await this.caslAbilityFactory.defineAbilityToReadRetweets(
+            currentUser,
+            currentUserRoles,
+            user,
+        );
+
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('read', 'retweets');
 
         return this.retweetsService.getUserRetweets(user);
     }
@@ -55,18 +77,39 @@ export class RetweetsController {
     @UseInterceptors(FilesInterceptor('imageFiles'))
     public async createRetweetOnRecord(
         @Body() createRetweetDto: CreateRetweetDto,
-        @CurrentUserDecorator() author: UsersEntity,
         @Param('recordId') recordId: string,
         @UploadedFiles() imageFiles: Array<Express.Multer.File>,
+        @CurrentUserDecorator() currentUser: UsersEntity,
+        @CurrentUserRolesDecorator() currentUserRoles: string[],
     ) {
-        const record = await this.recordsService.getRecordById(recordId);
+        const record = await this.recordsService.getRecordByIdOrThrow(recordId);
+        const currentUserAbility = await this.caslAbilityFactory.defineAbilityToCreateRetweets(
+            currentUser,
+            currentUserRoles,
+            record.author,
+        );
 
-        return this.retweetsService.createRetweetOnRecord(createRetweetDto, author, record, imageFiles);
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('create', 'retweets');
+
+        return this.retweetsService.createRetweetOnRecord(createRetweetDto, currentUser, record, imageFiles);
     }
 
     @Get('/:retweetId')
-    public getRetweetById(@Param('retweetId') retweetId: string) {
-        return this.retweetsService.getRetweetById(retweetId);
+    public async getRetweetById(
+        @Param('retweetId') retweetId: string,
+        @CurrentUserDecorator() currentUser: UsersEntity,
+        @CurrentUserRolesDecorator() currentUserRoles: string[],
+    ) {
+        const retweet = await this.retweetsService.getRetweetByIdOrThrow(retweetId);
+        const currentUserAbility = await this.caslAbilityFactory.defineAbilityToReadRetweets(
+            currentUser,
+            currentUserRoles,
+            retweet.author,
+        );
+
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('read', 'retweets');
+
+        return retweet;
     }
 
     @Delete('/:retweetId')
