@@ -68,6 +68,25 @@ export class CommentsService {
         });
     }
 
+    public async getCommentByIdOrThrow(commentId: string): Promise<RecordsEntity> {
+        const comment = await this.recordsTreeRepository.findOne({
+            where: {
+                id: commentId,
+                isRetweet: false,
+                isComment: true,
+            },
+            relations: {
+                images: true,
+            },
+        });
+
+        if (!comment) {
+            throw new NotFoundException({ message: 'comment not found' });
+        }
+
+        return comment;
+    }
+
     public async createCommentOnRecord(
         createCommentDto: CreateCommentDto,
         author: UsersEntity,

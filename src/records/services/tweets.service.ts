@@ -67,7 +67,7 @@ export class TweetsService {
         });
     }
 
-    public async getTweetByIdOrThrow(tweetId: string): Promise<RecordsEntity | null> {
+    public async getTweetByIdOrThrow(tweetId: string): Promise<RecordsEntity> {
         const tweet = await this.recordsTreeRepository.findOne({
             where: {
                 id: tweetId,
