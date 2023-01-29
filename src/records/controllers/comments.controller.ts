@@ -1,9 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
-import { CheckAbilityDecorator } from 'src/decorators/check-ability.decorator';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
-import { AbilityGuard } from 'src/guards/ability.guard';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/services/users.service';
@@ -32,8 +30,6 @@ export class CommentsController {
     }
 
     @Post('/record/:recordId')
-    @UseGuards(AbilityGuard)
-    @CheckAbilityDecorator({ action: 'create', subject: 'comments' })
     @UseInterceptors(FilesInterceptor('imageFiles'))
     public async createCommentOnRecord(
         @Body() createCommentDto: CreateCommentDto,

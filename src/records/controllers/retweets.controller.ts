@@ -1,9 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
-import { CheckAbilityDecorator } from 'src/decorators/check-ability.decorator';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
-import { AbilityGuard } from 'src/guards/ability.guard';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/services/users.service';
@@ -44,8 +42,6 @@ export class RetweetsController {
     }
 
     @Get('/user/:userId')
-    @UseGuards(AbilityGuard)
-    @CheckAbilityDecorator({ action: 'read', subject: 'retweets' })
     public async getUserRetweets(@Param('userId') userId: string) {
         const user = await this.usersService.getUserById(userId);
 
@@ -53,8 +49,6 @@ export class RetweetsController {
     }
 
     @Post('/:recordId')
-    @UseGuards(AbilityGuard)
-    @CheckAbilityDecorator({ action: 'create', subject: 'retweets' })
     @UseInterceptors(FilesInterceptor('imageFiles'))
     public async createRetweetOnRecord(
         @Body() createRetweetDto: CreateRetweetDto,
