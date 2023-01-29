@@ -71,7 +71,7 @@ export class CommentsController {
         @CurrentUserRolesDecorator() currentUserRoles: string[],
     ) {
         const comment = await this.commentsService.getCommentByIdOrThrow(commentId);
-        const currentUserAbility = await this.caslAbilityFactory.defineAbilityToCreateComments(
+        const currentUserAbility = await this.caslAbilityFactory.defineAbilityToReadComments(
             currentUser,
             currentUserRoles,
             comment.author,
@@ -89,7 +89,7 @@ export class CommentsController {
         @CurrentUserRolesDecorator() currentUserRoles: string[],
     ) {
         const record = await this.recordsService.getRecordByIdOrThrow(recordId);
-        const currentUserAbility = await this.caslAbilityFactory.defineAbilityToCreateComments(
+        const currentUserAbility = await this.caslAbilityFactory.defineAbilityToReadComments(
             currentUser,
             currentUserRoles,
             record.author,
@@ -101,9 +101,20 @@ export class CommentsController {
     }
 
     @Delete('/:commentId')
-    public async removeComment(@Param('commentId') commentId: string) {
-        const comment = await this.commentsService.getCommentById(commentId);
+    public async deleteCommentById(
+        @Param('commentId') commentId: string,
+        @CurrentUserDecorator() currentUser: UsersEntity,
+        @CurrentUserRolesDecorator() currentUserRoles: string[],
+    ) {
+        const comment = await this.commentsService.getCommentByIdOrThrow(commentId);
+        const currentUserAbility = this.caslAbilityFactory.defineAbilityToDeleteTweets(
+            currentUser,
+            currentUserRoles,
+            comment.author,
+        );
 
-        return this.commentsService.removeComment(comment);
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('delete', 'tweets');
+
+        return this.commentsService.clearCommentAndMarkAsDeleted(comment);
     }
 }

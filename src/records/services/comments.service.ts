@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, TreeRepository } from 'typeorm';
+import { DeleteResult, Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
 import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
@@ -148,7 +148,7 @@ export class CommentsService {
         return descendantsTree;
     }
 
-    public async removeComment(comment: RecordsEntity) {
+    public async clearCommentAndMarkAsDeleted(comment: RecordsEntity): Promise<RecordsEntity> {
         if (!comment) {
             throw new NotFoundException('comment not found');
         }
@@ -158,12 +158,14 @@ export class CommentsService {
             .where(`record_images."recordId" = :commentId`, { commentId: comment.id })
             .getMany();
 
-        commentImages.forEach((recordImage: RecordImagesEntity) => {
-            this.filesService.removeImageFile(recordImage.name);
+        commentImages.forEach((commentImage: RecordImagesEntity) => {
+            this.filesService.removeImageFile(commentImage.name);
+            this.recordImagesRepository.delete(commentImage);
         });
 
-        await this.recordImagesRepository.remove(commentImages);
+        comment.text = '';
+        comment.isDeleted = true;
 
-        return this.recordsTreeRepository.remove(comment);
+        return this.recordsTreeRepository.save(comment);
     }
 }
