@@ -32,9 +32,12 @@ export class RecordsEntity {
 
     @ManyToOne((type) => UsersEntity, {
         onDelete: 'SET NULL',
+        eager: true,
     })
     author: UsersEntity;
 
-    @OneToMany((type) => RecordImagesEntity, (image: RecordImagesEntity) => image.record)
+    @OneToMany((type) => RecordImagesEntity, (image: RecordImagesEntity) => image.record, {
+        eager: true,
+    })
     images: RecordImagesEntity[];
 }

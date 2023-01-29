@@ -69,7 +69,7 @@ export class AuthService {
     public async registerUser(
         signUpUserDto: SignUpUserDto,
         privacyInfo: PrivacyInfo,
-        userRoles: string[] = ['user'],
+        userRoles: string[],
     ): Promise<JwtTokensPair> {
         const hashedPassword = await bcryptjs.hash(signUpUserDto.password, 4);
         const user = await this.usersService.createUser({

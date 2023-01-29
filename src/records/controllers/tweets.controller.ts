@@ -65,7 +65,7 @@ export class TweetsController {
         @CurrentUserDecorator() currentUser: UsersEntity,
         @CurrentUserRolesDecorator() currentUserRoles: string[],
     ) {
-        const tweet = await this.tweetsService.getTweetById(tweetId);
+        const tweet = await this.tweetsService.getTweetByIdOrThrow(tweetId);
         const currentUserAbility = await this.caslAbilityFactory.defineAbilityToReadTweets(
             currentUser,
             currentUserRoles,
@@ -78,12 +78,12 @@ export class TweetsController {
     }
 
     @Delete('/:tweetId')
-    public async removeTweet(
+    public async deleteTweetById(
         @Param('tweetId') tweetId: string,
         @CurrentUserDecorator() currentUser: UsersEntity,
         @CurrentUserRolesDecorator() currentUserRoles: string[],
     ) {
-        const tweet = await this.tweetsService.getTweetById(tweetId);
+        const tweet = await this.tweetsService.getTweetByIdOrThrow(tweetId);
         const currentUserAbility = this.caslAbilityFactory.defineAbilityToDeleteTweets(
             currentUser,
             currentUserRoles,
@@ -92,6 +92,6 @@ export class TweetsController {
 
         ForbiddenError.from(currentUserAbility).throwUnlessCan('delete', 'tweets');
 
-        return this.tweetsService.removeTweet(tweet);
+        return this.tweetsService.deleteTweet(tweet);
     }
 }
