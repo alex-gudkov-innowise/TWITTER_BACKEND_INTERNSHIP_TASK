@@ -19,7 +19,7 @@ export class CommentsService {
         @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
 
-    public createCreatingCommentsRestriction(
+    public createRestrictionToCreateComments(
         targetUser: UsersEntity,
         initiatorUser: UsersEntity,
     ): Promise<RestrictionsEntity> {
@@ -31,6 +31,24 @@ export class CommentsService {
             targetUser,
             initiatorUser,
             action: 'create',
+            subject: 'comments',
+        });
+
+        return this.restrictionsRepository.save(restriction);
+    }
+
+    public createRestrictionToReadComments(
+        targetUser: UsersEntity,
+        initiatorUser: UsersEntity,
+    ): Promise<RestrictionsEntity> {
+        if (targetUser.id === initiatorUser.id) {
+            throw new BadRequestException('user cannot restrict himself');
+        }
+
+        const restriction = this.restrictionsRepository.create({
+            targetUser,
+            initiatorUser,
+            action: 'read',
             subject: 'comments',
         });
 

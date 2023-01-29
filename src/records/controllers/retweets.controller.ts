@@ -22,23 +22,23 @@ export class RetweetsController {
     ) {}
 
     @Post('/restriction/read/:userId')
-    public async createReadingRetweetsRestriction(
+    public async createRestrictionToReadRetweets(
         @Param('userId') targetUserId: string,
         @CurrentUserDecorator() initiatorUser: UsersEntity,
     ) {
         const targetUser = await this.usersService.getUserById(targetUserId);
 
-        return this.retweetsService.createReadingRetweetsRestriction(targetUser, initiatorUser);
+        return this.retweetsService.createRestrictionToReadRetweets(targetUser, initiatorUser);
     }
 
     @Post('/restriction/create/:userId')
-    public async createCreatingRetweetsRestriction(
+    public async createRestrictionToCreateRetweets(
         @Param('userId') targetUserId: string,
         @CurrentUserDecorator() initiatorUser: UsersEntity,
     ) {
         const targetUser = await this.usersService.getUserById(targetUserId);
 
-        return this.retweetsService.createCreatingRetweetsRestriction(targetUser, initiatorUser);
+        return this.retweetsService.createRestrictionToCreateRetweets(targetUser, initiatorUser);
     }
 
     @Get('/user/:userId')

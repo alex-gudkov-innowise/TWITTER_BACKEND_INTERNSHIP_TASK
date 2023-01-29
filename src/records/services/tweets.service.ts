@@ -19,7 +19,7 @@ export class TweetsService {
         @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
 
-    public createReadingTweetsRestriction(
+    public createRestrictionToReadTweets(
         targetUser: UsersEntity,
         initiatorUser: UsersEntity,
     ): Promise<RestrictionsEntity> {

@@ -22,13 +22,13 @@ export class TweetsController {
     ) {}
 
     @Post('/restriction/read/:userId')
-    public async createReadingTweetsRestriction(
+    public async createRestrictionToReadTweets(
         @Param('userId') targetUserId: string,
         @CurrentUserDecorator() initiatorUser: UsersEntity,
     ) {
         const targetUser = await this.usersService.getUserById(targetUserId);
 
-        return this.tweetsService.createReadingTweetsRestriction(targetUser, initiatorUser);
+        return this.tweetsService.createRestrictionToReadTweets(targetUser, initiatorUser);
     }
 
     @Get('/user/:userId')

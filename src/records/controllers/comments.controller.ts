@@ -20,13 +20,23 @@ export class CommentsController {
     ) {}
 
     @Post('/restriction/create/:userId')
-    public async createCreatingCommentsRestriction(
+    public async createRestrictionToCreateComments(
         @Param('userId') targetUserId: string,
         @CurrentUserDecorator() initiatorUser: UsersEntity,
     ) {
         const targetUser = await this.usersService.getUserById(targetUserId);
 
-        return this.commentsService.createCreatingCommentsRestriction(targetUser, initiatorUser);
+        return this.commentsService.createRestrictionToCreateComments(targetUser, initiatorUser);
+    }
+
+    @Post('/restriction/read/:userId')
+    public async createRestrictionToReadComments(
+        @Param('userId') targetUserId: string,
+        @CurrentUserDecorator() initiatorUser: UsersEntity,
+    ) {
+        const targetUser = await this.usersService.getUserById(targetUserId);
+
+        return this.commentsService.createRestrictionToReadComments(targetUser, initiatorUser);
     }
 
     @Post('/record/:recordId')
