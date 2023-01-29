@@ -23,6 +23,38 @@ export class CaslAbilityFactory {
         return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'read', 'tweets');
     }
 
+    public defineAbilityToReadComments(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): Promise<PureAbility> {
+        return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'read', 'comments');
+    }
+
+    public defineAbilityToReadRetweets(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): Promise<PureAbility> {
+        return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'read', 'retweets');
+    }
+
+    public defineAbilityToCreateComments(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): Promise<PureAbility> {
+        return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'create', 'comments');
+    }
+
+    public defineAbilityToCreateRetweets(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): Promise<PureAbility> {
+        return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'create', 'retweets');
+    }
+
     public async defineVisitorAbility(
         targetUser: UsersEntity,
         targetUserRoles: Array<string>,

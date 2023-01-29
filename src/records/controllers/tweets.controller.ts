@@ -60,8 +60,21 @@ export class TweetsController {
     }
 
     @Get('/:tweetId')
-    public getTweetById(@Param('tweetId') tweetId: string) {
-        return this.tweetsService.getTweetById(tweetId);
+    public async getTweetById(
+        @Param('tweetId') tweetId: string,
+        @CurrentUserDecorator() currentUser: UsersEntity,
+        @CurrentUserRolesDecorator() currentUserRoles: string[],
+    ) {
+        const tweet = await this.tweetsService.getTweetById(tweetId);
+        const currentUserAbility = await this.caslAbilityFactory.defineAbilityToReadTweets(
+            currentUser,
+            currentUserRoles,
+            tweet.author,
+        );
+
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('read', 'tweets');
+
+        return tweet;
     }
 
     @Delete('/:tweetId')
