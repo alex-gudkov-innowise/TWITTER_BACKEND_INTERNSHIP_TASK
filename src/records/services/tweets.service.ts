@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, TreeRepository } from 'typeorm';
+import { DeleteResult, Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
 import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
@@ -19,7 +19,7 @@ export class TweetsService {
         @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
 
-    public createReadingTweetsRestriction(
+    public createRestrictionToReadTweets(
         targetUser: UsersEntity,
         initiatorUser: UsersEntity,
     ): Promise<RestrictionsEntity> {
@@ -67,6 +67,26 @@ export class TweetsService {
         });
     }
 
+    public async getTweetByIdOrThrow(tweetId: string): Promise<RecordsEntity> {
+        const tweet = await this.recordsTreeRepository.findOne({
+            where: {
+                id: tweetId,
+                isRetweet: false,
+                isComment: false,
+            },
+            relations: {
+                images: true,
+                author: true,
+            },
+        });
+
+        if (!tweet) {
+            throw new NotFoundException('tweet not found');
+        }
+
+        return tweet;
+    }
+
     public async createTweet(
         createTweetDto: CreateTweetDto,
         author: UsersEntity,
@@ -94,7 +114,7 @@ export class TweetsService {
         return tweet;
     }
 
-    public async removeTweet(tweet: RecordsEntity) {
+    public async deleteTweet(tweet: RecordsEntity): Promise<DeleteResult> {
         if (!tweet) {
             throw new NotFoundException('tweet not found');
         }
@@ -104,12 +124,11 @@ export class TweetsService {
             .where(`record_images."recordId" = :tweetId`, { tweetId: tweet.id })
             .getMany();
 
-        tweetImages.forEach((recordImage: RecordImagesEntity) => {
-            this.filesService.removeImageFile(recordImage.name);
+        tweetImages.forEach(async (tweetImage: RecordImagesEntity) => {
+            this.filesService.removeImageFile(tweetImage.name);
+            await this.recordImagesRepository.delete(tweetImage);
         });
 
-        await this.recordImagesRepository.remove(tweetImages);
-
-        return this.recordsTreeRepository.remove(tweet);
+        return this.recordsTreeRepository.delete(tweet);
     }
 }

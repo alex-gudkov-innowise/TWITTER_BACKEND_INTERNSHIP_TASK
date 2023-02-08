@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TreeRepository } from 'typeorm';
 
@@ -16,8 +16,27 @@ export class RecordsService {
                 id: recordId,
             },
             relations: {
+                author: true,
                 images: true,
             },
         });
+    }
+
+    public getRecordByIdOrThrow(recordId: string): Promise<RecordsEntity> {
+        const record = this.recordsTreeRepository.findOne({
+            where: {
+                id: recordId,
+            },
+            relations: {
+                author: true,
+                images: true,
+            },
+        });
+
+        if (!record) {
+            throw new NotFoundException('record not found');
+        }
+
+        return record;
     }
 }

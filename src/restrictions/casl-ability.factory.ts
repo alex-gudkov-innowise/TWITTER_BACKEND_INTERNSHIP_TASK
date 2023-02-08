@@ -1,4 +1,4 @@
-import { AbilityBuilder, createMongoAbility } from '@casl/ability';
+import { AbilityBuilder, MongoAbility, PureAbility, createMongoAbility } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,33 +15,115 @@ export class CaslAbilityFactory {
         @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
 
-    public async defineAbility(targetUser: UsersEntity, initiatorUser: UsersEntity, targetUserRoles: string[]) {
-        const { build, can, cannot } = new AbilityBuilder(createMongoAbility);
+    public defineAbilityToReadTweets(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): Promise<PureAbility> {
+        return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'read', 'tweets');
+    }
 
-        defaultPermissions.forEach((defaultPermission: Permission) => {
-            can(defaultPermission.action, defaultPermission.subject);
-        });
+    public defineAbilityToReadComments(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): Promise<PureAbility> {
+        return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'read', 'comments');
+    }
+
+    public defineAbilityToReadRetweets(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): Promise<PureAbility> {
+        return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'read', 'retweets');
+    }
+
+    public defineAbilityToCreateComments(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): Promise<PureAbility> {
+        return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'create', 'comments');
+    }
+
+    public defineAbilityToCreateRetweets(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): Promise<PureAbility> {
+        return this.defineVisitorAbility(targetUser, targetUserRoles, initiatorUser, 'create', 'retweets');
+    }
+
+    public defineAbilityToDeleteTweets(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): PureAbility {
+        return this.defineOwnerAbility(targetUser, targetUserRoles, initiatorUser, 'delete', 'tweets');
+    }
+
+    public defineAbilityToDeleteComments(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): PureAbility {
+        return this.defineOwnerAbility(targetUser, targetUserRoles, initiatorUser, 'delete', 'comments');
+    }
+
+    public defineAbilityToDeleteRetweets(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+    ): PureAbility {
+        return this.defineOwnerAbility(targetUser, targetUserRoles, initiatorUser, 'delete', 'retweets');
+    }
+
+    public defineOwnerAbility(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+        action: string,
+        subject: string,
+    ): PureAbility {
+        const { build, can } = new AbilityBuilder<MongoAbility>(createMongoAbility);
 
         if (targetUserRoles.includes('admin')) {
-            can('delete', 'users');
-
-            return build();
+            can(action, subject);
+        } else {
+            if (targetUser.id === initiatorUser.id) {
+                can(action, subject);
+            }
         }
 
-        if (targetUser.id === initiatorUser.id) {
-            can('delete', 'users');
+        return build();
+    }
+
+    public async defineVisitorAbility(
+        targetUser: UsersEntity,
+        targetUserRoles: Array<string>,
+        initiatorUser: UsersEntity,
+        action: string,
+        subject: string,
+    ): Promise<PureAbility> {
+        const { build, can } = new AbilityBuilder<MongoAbility>(createMongoAbility);
+
+        if (targetUserRoles.includes('admin')) {
+            can(action, subject);
+        } else {
+            const isRestrictionExist = await this.restrictionsRepository.exist({
+                where: {
+                    targetUser,
+                    initiatorUser,
+                    action,
+                    subject,
+                },
+            });
+
+            if (!isRestrictionExist) {
+                can(action, subject);
+            }
         }
-
-        const restrictions = await this.restrictionsRepository.find({
-            where: {
-                targetUser,
-                initiatorUser,
-            },
-        });
-
-        restrictions.forEach((restriction: RestrictionsEntity) => {
-            cannot(restriction.action, restriction.subject);
-        });
 
         return build();
     }
