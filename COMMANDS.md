@@ -16,9 +16,9 @@ Migrations commands
 
 ```SH
 npm run typeorm migration:create -- ./migrations/<migration-name>
-npm run typeorm migration:generate -- -d ./src/configs/typeorm-config.ts -p ./migrations/<migration-name>
-npm run typeorm migration:run -- -d ./src/configs/typeorm-config.ts
-npm run typeorm migration:revert -- -d ./src/configs/typeorm-config.ts
+npm run typeorm migration:generate -- -d ./configs/data-source.ts -p ./migrations/<migration-name>
+npm run typeorm migration:run -- -d ./configs/data-source.ts
+npm run typeorm migration:revert -- -d ./configs/data-source.ts
 ```
 
 PostgreSQL CLI in Docker
@@ -50,7 +50,7 @@ class InternalServerErrorException {} // - 500
 
 Code linting settings
 
-##### settings.json
+#### _settings.json_
 
 ```JSON
 {
