@@ -39,4 +39,14 @@ export class RecordsService {
 
         return record;
     }
+
+    public async getAllPosts(): Promise<RecordsEntity[]> {
+        const posts = await this.recordsTreeRepository.find({
+            where: {
+                isComment: false,
+            },
+        });
+
+        return posts;
+    }
 }
