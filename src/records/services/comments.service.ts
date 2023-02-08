@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, TreeRepository } from 'typeorm';
+import { DeleteResult, Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
 import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
@@ -19,7 +19,7 @@ export class CommentsService {
         @InjectRepository(RestrictionsEntity) private readonly restrictionsRepository: Repository<RestrictionsEntity>,
     ) {}
 
-    public createCreatingCommentsRestriction(
+    public createRestrictionToCreateComments(
         targetUser: UsersEntity,
         initiatorUser: UsersEntity,
     ): Promise<RestrictionsEntity> {
@@ -37,6 +37,24 @@ export class CommentsService {
         return this.restrictionsRepository.save(restriction);
     }
 
+    public createRestrictionToReadComments(
+        targetUser: UsersEntity,
+        initiatorUser: UsersEntity,
+    ): Promise<RestrictionsEntity> {
+        if (targetUser.id === initiatorUser.id) {
+            throw new BadRequestException('user cannot restrict himself');
+        }
+
+        const restriction = this.restrictionsRepository.create({
+            targetUser,
+            initiatorUser,
+            action: 'read',
+            subject: 'comments',
+        });
+
+        return this.restrictionsRepository.save(restriction);
+    }
+
     public getCommentById(commentId: string): Promise<RecordsEntity | null> {
         return this.recordsTreeRepository.findOne({
             where: {
@@ -48,6 +66,25 @@ export class CommentsService {
                 images: true,
             },
         });
+    }
+
+    public async getCommentByIdOrThrow(commentId: string): Promise<RecordsEntity> {
+        const comment = await this.recordsTreeRepository.findOne({
+            where: {
+                id: commentId,
+                isRetweet: false,
+                isComment: true,
+            },
+            relations: {
+                images: true,
+            },
+        });
+
+        if (!comment) {
+            throw new NotFoundException({ message: 'comment not found' });
+        }
+
+        return comment;
     }
 
     public async createCommentOnRecord(
@@ -111,7 +148,7 @@ export class CommentsService {
         return descendantsTree;
     }
 
-    public async removeComment(comment: RecordsEntity) {
+    public async clearCommentAndMarkAsDeleted(comment: RecordsEntity): Promise<RecordsEntity> {
         if (!comment) {
             throw new NotFoundException('comment not found');
         }
@@ -121,12 +158,14 @@ export class CommentsService {
             .where(`record_images."recordId" = :commentId`, { commentId: comment.id })
             .getMany();
 
-        commentImages.forEach((recordImage: RecordImagesEntity) => {
-            this.filesService.removeImageFile(recordImage.name);
+        commentImages.forEach((commentImage: RecordImagesEntity) => {
+            this.filesService.removeImageFile(commentImage.name);
+            this.recordImagesRepository.delete(commentImage);
         });
 
-        await this.recordImagesRepository.remove(commentImages);
+        comment.text = '';
+        comment.isDeleted = true;
 
-        return this.recordsTreeRepository.remove(comment);
+        return this.recordsTreeRepository.save(comment);
     }
 }

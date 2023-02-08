@@ -19,7 +19,7 @@ export class RecordsEntity {
     @Column({ nullable: false })
     isRetweet: boolean;
 
-    @Column({ type: 'text', nullable: false })
+    @Column({ type: 'text' })
     text: string;
 
     @TreeChildren()
@@ -30,11 +30,17 @@ export class RecordsEntity {
     })
     parent: RecordsEntity;
 
-    @ManyToOne((type) => UsersEntity, {
+    @ManyToOne(() => UsersEntity, {
         onDelete: 'SET NULL',
+        eager: true,
     })
     author: UsersEntity;
 
-    @OneToMany((type) => RecordImagesEntity, (image: RecordImagesEntity) => image.record)
+    @OneToMany(() => RecordImagesEntity, (image: RecordImagesEntity) => image.record, {
+        eager: true,
+    })
     images: RecordImagesEntity[];
+
+    @Column({ default: false })
+    isDeleted: boolean;
 }

@@ -30,7 +30,7 @@ export class AuthController {
     ) {
         const signUpUserDto = await this.authService.confirmEmailAndGetSignUpUserDto(verificationCodeDto.value);
 
-        return this.authService.registerUser(signUpUserDto, privacyInfo);
+        return this.authService.registerUser(signUpUserDto, privacyInfo, ['user']);
     }
 
     @Post('/sign-in')
