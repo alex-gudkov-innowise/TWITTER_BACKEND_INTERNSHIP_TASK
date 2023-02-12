@@ -15,7 +15,6 @@ import { AuthModule } from './auth/auth.module';
 import { FilesModule } from './files/files.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { CommentsController } from './records/controllers/comments.controller';
-import { FeedController } from './records/controllers/feed.controller';
 import { RetweetsController } from './records/controllers/retweets.controller';
 import { TweetsController } from './records/controllers/tweets.controller';
 import { RecordsModule } from './records/records.module';
@@ -53,7 +52,6 @@ export class AppModule {
                 CommentsController,
                 RetweetsController,
                 RestrictionsController,
-                FeedController,
                 { path: '/sessions/all', method: RequestMethod.GET },
                 { path: '/sessions/:sessionId', method: RequestMethod.DELETE },
                 { path: '/sessions/all', method: RequestMethod.DELETE },

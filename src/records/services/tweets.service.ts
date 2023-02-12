@@ -37,7 +37,7 @@ export class TweetsService {
         return this.restrictionsRepository.save(restriction);
     }
 
-    public getAllUserTweets(user: UsersEntity): Promise<RecordsEntity[] | null> {
+    public getAllUserTweets(user: UsersEntity): Promise<RecordsEntity[]> {
         if (!user) {
             throw new NotFoundException('user not found');
         }
@@ -49,6 +49,19 @@ export class TweetsService {
             },
             relations: {
                 images: true,
+                author: true,
+            },
+        });
+    }
+
+    public getAllTweets(): Promise<RecordsEntity[]> {
+        return this.recordsTreeRepository.find({
+            where: {
+                isComment: false,
+            },
+            relations: {
+                images: true,
+                author: true,
             },
         });
     }
