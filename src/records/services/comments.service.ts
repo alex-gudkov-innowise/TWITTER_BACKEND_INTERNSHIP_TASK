@@ -138,6 +138,27 @@ export class CommentsService {
         return commentsTree;
     }
 
+    public getRecordUpperLevelComments(record: RecordsEntity): Promise<RecordsEntity[]> {
+        if (!record) {
+            throw new NotFoundException({ message: 'record not found' });
+        }
+
+        // return this.recordsTreeRepository
+        //     .createQueryBuilder('records')
+        //     .where(`records."parentId" = :recordId`, { recordId: record.id })
+        //     .getMany();
+
+        return this.recordsTreeRepository.find({
+            where: {
+                parent: record,
+                isComment: true,
+            },
+            relations: {
+                images: true,
+            },
+        });
+    }
+
     private filterDescendantsTreeForCommentsTree(descendantsTree: RecordsEntity): RecordsEntity {
         descendantsTree.children = descendantsTree.children.filter((child: RecordsEntity) => {
             if (child.isComment) {

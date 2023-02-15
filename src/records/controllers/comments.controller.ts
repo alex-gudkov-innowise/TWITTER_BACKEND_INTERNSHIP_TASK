@@ -82,7 +82,7 @@ export class CommentsController {
         return comment;
     }
 
-    @Get('/record/:recordId')
+    @Get('/tree/record/:recordId')
     public async getCommentsTree(
         @Param('recordId') recordId: string,
         @CurrentUserDecorator() currentUser: UsersEntity,
@@ -98,6 +98,13 @@ export class CommentsController {
         ForbiddenError.from(currentUserAbility).throwUnlessCan('read', 'comments');
 
         return this.commentsService.getCommentsTree(record);
+    }
+
+    @Get('/record/:recordId')
+    public async getRecordUpperLevelComments(@Param('recordId') recordId: string) {
+        const record = await this.recordsService.getRecordById(recordId);
+
+        return this.commentsService.getRecordUpperLevelComments(record);
     }
 
     @Delete('/:commentId')
