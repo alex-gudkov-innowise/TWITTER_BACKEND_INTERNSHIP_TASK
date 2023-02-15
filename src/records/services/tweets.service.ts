@@ -108,6 +108,10 @@ export class TweetsService {
         author: UsersEntity,
         imageFiles: Array<Express.Multer.File> = [],
     ): Promise<RecordsEntity> {
+        if (!createTweetDto.text && !createTweetDto.text) {
+            throw new BadRequestException('tweet cannot be empty');
+        }
+
         const tweet = this.recordsTreeRepository.create({
             text: createTweetDto.text,
             isComment: false,
