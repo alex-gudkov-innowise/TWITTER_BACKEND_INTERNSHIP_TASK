@@ -51,6 +51,9 @@ export class TweetsService {
                 images: true,
                 author: true,
             },
+            order: {
+                createdAt: 'DESC',
+            },
         });
     }
 
