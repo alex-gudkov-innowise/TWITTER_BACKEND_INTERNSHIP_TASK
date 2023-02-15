@@ -93,6 +93,10 @@ export class CommentsService {
         record: RecordsEntity,
         imageFiles: Array<Express.Multer.File> = [],
     ): Promise<RecordsEntity> {
+        if (createCommentDto.text === '' && imageFiles.length === 0) {
+            throw new BadRequestException('comment cannot be empty');
+        }
+
         if (!record) {
             throw new NotFoundException({ message: 'record not found' });
         }
