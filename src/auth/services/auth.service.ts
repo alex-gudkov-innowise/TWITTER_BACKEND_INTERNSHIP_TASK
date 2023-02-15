@@ -20,6 +20,7 @@ import * as uuid from 'uuid';
 import { JwtTokensPair } from 'src/interfaces/jwt-tokens-pair.interface';
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
+import { UserEntityWithJwtPair } from 'src/interfaces/user-entity-with-jwt-pair.interface';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/services/users.service';
 
@@ -70,7 +71,7 @@ export class AuthService {
         signUpUserDto: SignUpUserDto,
         privacyInfo: PrivacyInfo,
         userRoles: string[],
-    ): Promise<JwtTokensPair> {
+    ): Promise<UserEntityWithJwtPair> {
         const hashedPassword = await bcryptjs.hash(signUpUserDto.password, 4);
         const user = await this.usersService.createUser({
             ...signUpUserDto,
@@ -83,12 +84,13 @@ export class AuthService {
         await this.deleteExtraUserSessions(user);
 
         return {
+            user,
             accessToken,
             refreshToken: refreshToken.value,
         };
     }
 
-    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<JwtTokensPair> {
+    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<UserEntityWithJwtPair> {
         const user = await this.validateUser(signInUserDto);
         const userRoles = await this.getUserRoles(user);
         const accessToken = this.createAccessToken(user, userRoles);
@@ -99,6 +101,7 @@ export class AuthService {
         await this.sendLoginNotificationEmail(signInUserDto.email, privacyInfo);
 
         return {
+            user,
             accessToken,
             refreshToken: refreshToken.value,
         };
