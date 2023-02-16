@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
 
-import { UserEntityWithJwtPair } from 'src/interfaces/user-entity-with-jwt-pair.interface';
+import { defaultUserProfileImages } from 'src/constants/default-user-profile-images';
 
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UserProfileImagesEntity } from '../entities/users-profile-images.entity';
@@ -32,8 +32,8 @@ export class UsersService {
         const user = this.usersRepository.create(createUserDto);
         const userProfileImages = this.userProfileImagesRepository.create({
             user,
-            avatarImageName: null,
-            coverImageName: null,
+            avatarImageName: defaultUserProfileImages.avatarImageName,
+            coverImageName: defaultUserProfileImages.coverImageName,
         });
 
         this.userProfileImagesRepository.save(userProfileImages);

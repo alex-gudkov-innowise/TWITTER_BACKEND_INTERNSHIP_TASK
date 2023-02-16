@@ -17,5 +17,14 @@
         "strictBindCallApply": false,
         "forceConsistentCasingInFileNames": false,
         "noFallthroughCasesInSwitch": false
-    }
+    },
+    "include": [
+        "./configs",
+        "./migrations",
+        "./src",
+        "./static/default-user-profile-images/*.*"
+    ],
+    "exclude": [
+        "node_modules"
+    ],
 }
