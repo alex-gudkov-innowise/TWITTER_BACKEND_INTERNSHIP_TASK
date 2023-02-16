@@ -42,6 +42,7 @@ export class TweetsService {
             throw new NotFoundException('user not found');
         }
 
+
         return this.recordsTreeRepository.find({
             where: {
                 isComment: false,

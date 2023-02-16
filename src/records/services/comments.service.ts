@@ -172,6 +172,7 @@ export class CommentsService {
         return this.recordsTreeRepository
             .createQueryBuilder('records')
             .leftJoinAndSelect('records.images', 'images')
+            .leftJoinAndSelect('records.author', 'author')
             .where(`records."parentId" = :recordId`, { recordId: record.id })
             .orderBy('records.id', 'DESC')
             .getMany();

@@ -45,7 +45,7 @@ export class UsersService {
         return this.userProfileImagesRepository.findOneBy({ user });
     }
 
-    public deleteUser(user: UsersEntity): Promise<DeleteResult> {
-        return this.usersRepository.delete(user);
+    public deleteUser(user: UsersEntity): Promise<any> {
+        return this.usersRepository.remove(user);
     }
 }
