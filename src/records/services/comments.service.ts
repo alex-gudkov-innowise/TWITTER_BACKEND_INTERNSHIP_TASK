@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository, TreeRepository } from 'typeorm';
+import { Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
 import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';

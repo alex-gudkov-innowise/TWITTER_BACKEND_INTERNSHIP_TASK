@@ -4,7 +4,6 @@ import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
-import { RecordsEntity } from '../entities/records.entity';
 import { RecordsService } from '../services/records.service';
 
 @UseGuards(AuthGuard)
@@ -35,5 +34,12 @@ export class RecordsController {
         const record = await this.recordsService.getRecordById(recordId);
 
         return this.recordsService.deleteLikeFromRecord(record, currentUser);
+    }
+
+    @Get('/:recordId/likes-count')
+    public async getRecordLikesCount(@Param('recordId') recordId: string) {
+        const record = await this.recordsService.getRecordById(recordId);
+
+        return this.recordsService.getRecordLikesCount(record);
     }
 }

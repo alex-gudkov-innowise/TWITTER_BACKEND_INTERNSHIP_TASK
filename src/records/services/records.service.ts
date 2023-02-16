@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository, TreeRepository } from 'typeorm';
 
+import { LikesCount } from 'src/interfaces/likes-count.interface';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
-import { RecordImagesEntity } from '../entities/record-images.entity';
 import { RecordLikesEntity } from '../entities/record-likes.entity';
 import { RecordsEntity } from '../entities/records.entity';
 
@@ -67,5 +67,21 @@ export class RecordsService {
             record,
             user,
         });
+    }
+
+    public async getRecordLikesCount(record: RecordsEntity): Promise<LikesCount> {
+        if (!record) {
+            throw new NotFoundException('record not found');
+        }
+
+        const likesCount = await this.recordLikesRepository.count({
+            where: {
+                record,
+            },
+        });
+
+        return {
+            likesCount,
+        };
     }
 }
