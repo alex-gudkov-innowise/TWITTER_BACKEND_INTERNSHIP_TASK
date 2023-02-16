@@ -30,13 +30,13 @@ export class UsersService {
 
     public createUser(createUserDto: CreateUserDto): Promise<UsersEntity> {
         const user = this.usersRepository.create(createUserDto);
-        const userProfileImages = this.userProfileImagesRepository.create({
-            user,
-            avatarImageName: defaultUserProfileImages.avatarImageName,
-            coverImageName: defaultUserProfileImages.coverImageName,
-        });
+        // const userProfileImages = this.userProfileImagesRepository.create({
+        //     user,
+        //     avatarImageName: defaultUserProfileImages.avatarImageName,
+        //     coverImageName: defaultUserProfileImages.coverImageName,
+        // });
 
-        this.userProfileImagesRepository.save(userProfileImages);
+        // this.userProfileImagesRepository.save(userProfileImages);
 
         return this.usersRepository.save(user);
     }

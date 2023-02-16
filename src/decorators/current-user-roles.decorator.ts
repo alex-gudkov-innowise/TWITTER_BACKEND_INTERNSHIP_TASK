@@ -1,11 +1,11 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-import { RequestWithUserRoles } from 'src/interfaces/request-with-user-roles.interface';
+import { RequestWithUserRolesValues } from 'src/interfaces/request-with-user-roles-values.interface';
 
 export const CurrentUserRolesDecorator = createParamDecorator(
     (data: unknown, context: ExecutionContext): Array<string> => {
-        const requestWithUserRoles = context.switchToHttp().getRequest<RequestWithUserRoles>();
+        const requestWithUserRolesValues = context.switchToHttp().getRequest<RequestWithUserRolesValues>();
 
-        return requestWithUserRoles.currentUserRoles;
+        return requestWithUserRolesValues.currentUserRolesValues;
     },
 );

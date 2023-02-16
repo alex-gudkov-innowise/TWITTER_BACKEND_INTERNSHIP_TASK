@@ -30,6 +30,8 @@ export class AuthController {
     ) {
         const signUpUserDto = await this.authService.confirmEmailAndGetSignUpUserDto(verificationCodeDto.value);
 
+        console.log(signUpUserDto);
+
         return this.authService.registerUser(signUpUserDto, privacyInfo, ['user']);
     }
 
