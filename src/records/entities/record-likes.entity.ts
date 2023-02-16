@@ -5,7 +5,7 @@ import { UsersEntity } from 'src/users/entities/users.entity';
 import { RecordsEntity } from './records.entity';
 
 @Entity({ name: 'record_likes' })
-export class RecordLikes {
+export class RecordLikesEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 

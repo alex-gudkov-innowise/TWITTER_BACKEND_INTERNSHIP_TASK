@@ -12,6 +12,7 @@ import { RecordsController } from './controllers/records.controller';
 import { RetweetsController } from './controllers/retweets.controller';
 import { TweetsController } from './controllers/tweets.controller';
 import { RecordImagesEntity } from './entities/record-images.entity';
+import { RecordLikesEntity } from './entities/record-likes.entity';
 import { RecordsEntity } from './entities/records.entity';
 import { CommentsService } from './services/comments.service';
 import { RecordsService } from './services/records.service';
@@ -22,7 +23,13 @@ import { TweetsService } from './services/tweets.service';
     controllers: [TweetsController, CommentsController, RetweetsController, RecordsController],
     providers: [RecordsService, TweetsService, RetweetsService, CommentsService],
     imports: [
-        TypeOrmModule.forFeature([RecordsEntity, UsersEntity, RecordImagesEntity, RestrictionsEntity]),
+        TypeOrmModule.forFeature([
+            RecordsEntity,
+            UsersEntity,
+            RecordImagesEntity,
+            RestrictionsEntity,
+            RecordLikesEntity,
+        ]),
         UsersModule,
         RecordsModule,
         FilesModule,
