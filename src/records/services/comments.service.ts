@@ -150,56 +150,47 @@ export class CommentsService {
         return commentsCount;
     }
 
-    public async getCommentsTree(record: RecordsEntity): Promise<RecordsEntity> {
+    public async getRecordCommentsTree(record: RecordsEntity): Promise<RecordsEntity> {
         if (!record) {
             throw new NotFoundException('record not found');
         }
 
-        const descendantsTree = await this.recordsTreeRepository.findDescendantsTree(record, {
+        const recordDescendantsTree = await this.recordsTreeRepository.findDescendantsTree(record, {
             relations: ['images'],
         });
 
-        const commentsTree = this.filterDescendantsTreeForCommentsTree(descendantsTree);
+        const recordCommentsTree = this.filterRecordDescendantsTreeForCommentsTree(recordDescendantsTree);
 
-        return commentsTree;
+        return recordCommentsTree;
     }
 
-    public getRecordUpperLevelComments(record: RecordsEntity): Promise<RecordsEntity[]> {
+    public getRecordCommentsUpperLevel(record: RecordsEntity): Promise<RecordsEntity[]> {
         if (!record) {
             throw new NotFoundException('record not found');
         }
 
-        // return this.recordsTreeRepository
-        //     .createQueryBuilder('records')
-        //     .where(`records."parentId" = :recordId`, { recordId: record.id })
-        //     .getMany();
-
-        return this.recordsTreeRepository.find({
-            where: {
-                parent: record,
-                isComment: true,
-            },
-            relations: {
-                images: true,
-            },
-            order: {
-                createdAt: 'DESC',
-            },
-        });
+        return this.recordsTreeRepository
+            .createQueryBuilder('records')
+            .leftJoinAndSelect('records.images', 'images')
+            .where(`records."parentId" = :recordId`, { recordId: record.id })
+            .orderBy('records.id', 'DESC')
+            .getMany();
     }
 
-    private filterDescendantsTreeForCommentsTree(descendantsTree: RecordsEntity): RecordsEntity {
-        descendantsTree.children = descendantsTree.children.filter((child: RecordsEntity): boolean => {
-            if (child.isComment) {
-                child = this.filterDescendantsTreeForCommentsTree(child);
+    private filterRecordDescendantsTreeForCommentsTree(recordDescendantsTree: RecordsEntity): RecordsEntity {
+        recordDescendantsTree.children = recordDescendantsTree.children.filter(
+            (recordChild: RecordsEntity): boolean => {
+                if (recordChild.isComment) {
+                    recordChild = this.filterRecordDescendantsTreeForCommentsTree(recordChild);
 
-                return true;
-            } else {
-                return false;
-            }
-        });
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+        );
 
-        return descendantsTree;
+        return recordDescendantsTree;
     }
 
     public async clearCommentAndMarkAsDeleted(comment: RecordsEntity): Promise<RecordsEntity> {
