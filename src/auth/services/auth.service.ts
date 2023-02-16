@@ -17,7 +17,6 @@ import { SentMessageInfo } from 'nodemailer';
 import { Repository } from 'typeorm';
 import * as uuid from 'uuid';
 
-import { JwtTokensPair } from 'src/interfaces/jwt-tokens-pair.interface';
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
 import { UserEntityWithJwtPair } from 'src/interfaces/user-entity-with-jwt-pair.interface';
@@ -70,14 +69,17 @@ export class AuthService {
     public async registerUser(
         signUpUserDto: SignUpUserDto,
         privacyInfo: PrivacyInfo,
-        userRoles: string[],
+        rolesValues: string[],
     ): Promise<UserEntityWithJwtPair> {
         const hashedPassword = await bcryptjs.hash(signUpUserDto.password, 4);
         const user = await this.usersService.createUser({
             ...signUpUserDto,
             password: hashedPassword,
         });
-        const accessToken = this.createAccessToken(user, userRoles);
+
+        await this.createUserRoles(user, rolesValues);
+
+        const accessToken = this.createAccessToken(user, rolesValues);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
 
@@ -92,8 +94,9 @@ export class AuthService {
 
     public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<UserEntityWithJwtPair> {
         const user = await this.validateUser(signInUserDto);
-        const userRoles = await this.getUserRoles(user);
-        const accessToken = this.createAccessToken(user, userRoles);
+        const userRoles = await this.usersRolesRepository.findBy({ user });
+        const rolesValues = this.mapUserRolesToRolesValues(userRoles);
+        const accessToken = this.createAccessToken(user, rolesValues);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
 
@@ -289,10 +292,21 @@ export class AuthService {
         });
     }
 
-    private async getUserRoles(user: UsersEntity): Promise<string[]> {
-        const userRoles = await this.usersRolesRepository.findBy({ user });
-
+    private mapUserRolesToRolesValues(userRoles: UsersRolesEntity[]): string[] {
         return userRoles.map((userRole: UsersRolesEntity): string => userRole.role);
+    }
+
+    private createUserRoles(user: UsersEntity, rolesValues: string[]): Promise<UsersRolesEntity[]> {
+        return Promise.all(
+            rolesValues.map((roleValue: string): Promise<UsersRolesEntity> => {
+                const userRole = this.usersRolesRepository.create({
+                    user,
+                    role: roleValue,
+                });
+
+                return this.usersRolesRepository.save(userRole);
+            }),
+        );
     }
 
     private createAccessToken(user: UsersEntity, userRoles: string[]): string {
@@ -345,8 +359,9 @@ export class AuthService {
         }
 
         const user = await this.usersService.getUserById(userSession.userId);
-        const userRoles = await this.getUserRoles(user);
-        const accessToken = this.createAccessToken(user, userRoles);
+        const userRoles = await this.usersRolesRepository.findBy({ user });
+        const rolesValues = this.mapUserRolesToRolesValues(userRoles);
+        const accessToken = this.createAccessToken(user, rolesValues);
 
         refreshToken.value = uuid.v4();
         this.refreshTokensRepository.save(refreshToken);
