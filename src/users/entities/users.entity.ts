@@ -16,6 +16,9 @@ export class UsersEntity {
     @Column({ nullable: false })
     password: string;
 
+    @Column({ type: 'timestamp', default: () => 'NOW()' })
+    createdAt: Date;
+
     @OneToMany(() => RefreshTokensEntity, (refreshToken: RefreshTokensEntity) => refreshToken.user)
     refreshTokens: RefreshTokensEntity[];
 }
