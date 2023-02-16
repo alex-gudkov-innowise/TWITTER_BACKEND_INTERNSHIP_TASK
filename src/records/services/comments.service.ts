@@ -156,6 +156,9 @@ export class CommentsService {
             relations: {
                 images: true,
             },
+            order: {
+                createdAt: 'DESC',
+            },
         });
     }
 

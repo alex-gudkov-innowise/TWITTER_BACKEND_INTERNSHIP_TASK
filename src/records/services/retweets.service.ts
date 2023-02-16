@@ -69,6 +69,9 @@ export class RetweetsService {
             relations: {
                 images: true,
             },
+            order: {
+                createdAt: 'DESC',
+            },
         });
     }
 

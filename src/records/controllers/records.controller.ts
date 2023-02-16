@@ -27,7 +27,7 @@ export class RecordsController {
         return this.recordsService.createLikeOnRecord(record, currentUser);
     }
 
-    @Delete('recordId/like')
+    @Delete('/:recordId/like')
     public async deleteLikeFromRecord(
         @Param('recordId') recordId: string,
         @CurrentUserDecorator() currentUser: UsersEntity,
