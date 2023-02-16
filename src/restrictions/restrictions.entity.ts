@@ -7,13 +7,13 @@ export class RestrictionsEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @ManyToOne((type) => UsersEntity, {
+    @ManyToOne(() => UsersEntity, {
         onDelete: 'CASCADE',
     })
     @JoinColumn({ name: 'targetUserId' })
     targetUser: UsersEntity;
 
-    @ManyToOne((type) => UsersEntity, {
+    @ManyToOne(() => UsersEntity, {
         onDelete: 'CASCADE',
     })
     @JoinColumn({ name: 'initiatorUserId' })

@@ -12,6 +12,7 @@ export class UsersRolesEntity {
 
     @ManyToOne(() => UsersEntity, {
         onDelete: 'CASCADE',
+        cascade: true,
     })
     @JoinColumn({ name: 'userId' })
     user: UsersEntity;

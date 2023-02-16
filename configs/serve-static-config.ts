@@ -7,7 +7,7 @@ export class ServeStaticConfig implements ServeStaticModuleOptionsFactory {
     public createLoggerOptions(): Promise<ServeStaticModuleOptions[]> | ServeStaticModuleOptions[] {
         return [
             {
-                rootPath: path.join(__dirname, '..', '..', 'static'),
+                rootPath: path.join(__dirname, '..', 'static'),
             },
         ];
     }

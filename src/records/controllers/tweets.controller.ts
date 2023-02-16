@@ -49,6 +49,11 @@ export class TweetsController {
         return this.tweetsService.getAllUserTweets(user);
     }
 
+    @Get('/all')
+    public getAllTweets() {
+        return this.tweetsService.getAllTweets();
+    }
+
     @Post('/')
     @UseInterceptors(FilesInterceptor('imageFiles'))
     public createTweet(

@@ -17,9 +17,9 @@ import { SentMessageInfo } from 'nodemailer';
 import { Repository } from 'typeorm';
 import * as uuid from 'uuid';
 
-import { JwtTokensPair } from 'src/interfaces/jwt-tokens-pair.interface';
 import { PrivacyInfo } from 'src/interfaces/privacy-info.interface';
 import { UserSessionEntity } from 'src/interfaces/session-entity.interface';
+import { UserEntityWithJwtPair } from 'src/interfaces/user-entity-with-jwt-pair.interface';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/services/users.service';
 
@@ -69,13 +69,14 @@ export class AuthService {
     public async registerUser(
         signUpUserDto: SignUpUserDto,
         privacyInfo: PrivacyInfo,
-        userRoles: string[],
-    ): Promise<JwtTokensPair> {
+        rolesValues: string[],
+    ): Promise<UserEntityWithJwtPair> {
         const hashedPassword = await bcryptjs.hash(signUpUserDto.password, 4);
         const user = await this.usersService.createUser({
             ...signUpUserDto,
             password: hashedPassword,
         });
+        const userRoles = await this.createUserRoles(user, rolesValues);
         const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
@@ -83,14 +84,18 @@ export class AuthService {
         await this.deleteExtraUserSessions(user);
 
         return {
+            user,
             accessToken,
             refreshToken: refreshToken.value,
         };
     }
 
-    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<JwtTokensPair> {
+    public async signInUser(signInUserDto: SignInUserDto, privacyInfo: PrivacyInfo): Promise<UserEntityWithJwtPair> {
         const user = await this.validateUser(signInUserDto);
-        const userRoles = await this.getUserRoles(user);
+        const userRoles = await this.usersRolesRepository
+            .createQueryBuilder('users_roles')
+            .where(`users_roles."userId" = :userId`, { userId: user.id })
+            .getMany();
         const accessToken = this.createAccessToken(user, userRoles);
         const userSession = await this.createUserSession(user, privacyInfo);
         const refreshToken = await this.createRefreshToken(user, userSession);
@@ -99,9 +104,31 @@ export class AuthService {
         await this.sendLoginNotificationEmail(signInUserDto.email, privacyInfo);
 
         return {
+            user,
             accessToken,
             refreshToken: refreshToken.value,
         };
+    }
+
+    private mapUserRolesToRolesValues(userRoles: UsersRolesEntity[]): string[] {
+        return userRoles.map((userRole: UsersRolesEntity): string => userRole.role);
+    }
+
+    private async createUserRoles(user: UsersEntity, rolesValues: string[]): Promise<UsersRolesEntity[]> {
+        const userRoles: UsersRolesEntity[] = await Promise.all(
+            rolesValues.map(async (roleValue: string): Promise<UsersRolesEntity> => {
+                const userRole = this.usersRolesRepository.create({
+                    user,
+                    role: roleValue,
+                });
+
+                await this.usersRolesRepository.save(userRole);
+
+                return userRole;
+            }),
+        );
+
+        return userRoles;
     }
 
     public async validateUser(signInUserDto: SignInUserDto): Promise<UsersEntity> {
@@ -286,20 +313,15 @@ export class AuthService {
         });
     }
 
-    private async getUserRoles(user: UsersEntity): Promise<string[]> {
-        const userRoles = await this.usersRolesRepository.findBy({ user });
-
-        return userRoles.map((userRole: UsersRolesEntity): string => userRole.role);
-    }
-
-    private createAccessToken(user: UsersEntity, userRoles: string[]): string {
+    private createAccessToken(user: UsersEntity, userRoles: UsersRolesEntity[]): string {
         if (!user) {
             throw new NotFoundException('user not found');
         }
 
+        const rolesValues = this.mapUserRolesToRolesValues(userRoles);
         const payload = {
             userId: user.id,
-            userRoles,
+            userRolesValues: rolesValues,
         };
         const accessToken = this.jwtService.sign(payload);
 
@@ -342,7 +364,7 @@ export class AuthService {
         }
 
         const user = await this.usersService.getUserById(userSession.userId);
-        const userRoles = await this.getUserRoles(user);
+        const userRoles = await this.usersRolesRepository.findBy({ user });
         const accessToken = this.createAccessToken(user, userRoles);
 
         refreshToken.value = uuid.v4();
