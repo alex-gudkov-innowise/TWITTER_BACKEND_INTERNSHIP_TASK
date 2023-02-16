@@ -64,6 +64,13 @@ export class CommentsController {
         return this.commentsService.createCommentOnRecord(createCommentDto, currentUser, record, imageFiles);
     }
 
+    @Get('/count/record/:recordId')
+    public async getRecordCommentsCount(@Param('recordId') recordId: string) {
+        const record = await this.recordsService.getRecordById(recordId);
+
+        return this.commentsService.getRecordCommentsCount(record);
+    }
+
     @Get('/:commentId')
     public async getCommentById(
         @Param('commentId') commentId: string,
@@ -83,7 +90,7 @@ export class CommentsController {
     }
 
     @Get('/tree/record/:recordId')
-    public async getCommentsTree(
+    public async getRecordCommentsTree(
         @Param('recordId') recordId: string,
         @CurrentUserDecorator() currentUser: UsersEntity,
         @CurrentUserRolesDecorator() currentUserRoles: string[],
@@ -97,14 +104,14 @@ export class CommentsController {
 
         ForbiddenError.from(currentUserAbility).throwUnlessCan('read', 'comments');
 
-        return this.commentsService.getCommentsTree(record);
+        return this.commentsService.getRecordCommentsTree(record);
     }
 
-    @Get('/record/:recordId')
-    public async getRecordUpperLevelComments(@Param('recordId') recordId: string) {
+    @Get('/upper-lever/record/:recordId')
+    public async getRecordCommentsUpperLevel(@Param('recordId') recordId: string) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.commentsService.getRecordUpperLevelComments(record);
+        return this.commentsService.getRecordCommentsUpperLevel(record);
     }
 
     @Delete('/:commentId')

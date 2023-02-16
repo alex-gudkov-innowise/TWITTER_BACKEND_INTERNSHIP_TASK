@@ -42,19 +42,28 @@ export class TweetsService {
             throw new NotFoundException('user not found');
         }
 
-        return this.recordsTreeRepository.find({
-            where: {
-                isComment: false,
-                author: user,
-            },
-            relations: {
-                images: true,
-                author: true,
-            },
-            order: {
-                createdAt: 'DESC',
-            },
-        });
+        // return this.recordsTreeRepository.find({
+        //     where: {
+        //         isComment: false,
+        //         author: user,
+        //     },
+        //     relations: {
+        //         images: true,
+        //         author: true,
+        //     },
+        //     order: {
+        //         createdAt: 'DESC',
+        //     },
+        // });
+
+        return this.recordsTreeRepository
+            .createQueryBuilder('records')
+            .leftJoinAndSelect('records.images', 'images')
+            .leftJoinAndSelect('records.author', 'author')
+            .where(`records."authorId" = :userId`, { userId: user.id })
+            .where(`records."isComment" = FALSE`)
+            .orderBy('records.createdAt', 'DESC')
+            .getMany();
     }
 
     public getAllTweets(): Promise<RecordsEntity[]> {

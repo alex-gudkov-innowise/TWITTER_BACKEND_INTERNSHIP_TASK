@@ -10,7 +10,7 @@ export class RecordImagesEntity {
     @Column({ nullable: false })
     name: string;
 
-    @ManyToOne((type) => RecordsEntity, (record: RecordsEntity) => record.images, {
+    @ManyToOne(() => RecordsEntity, (record: RecordsEntity) => record.images, {
         onDelete: 'CASCADE',
     })
     record: RecordsEntity;

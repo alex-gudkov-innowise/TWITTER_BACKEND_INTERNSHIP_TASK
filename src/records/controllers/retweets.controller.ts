@@ -23,7 +23,6 @@ import { UsersService } from 'src/users/services/users.service';
 import { CreateRetweetDto } from '../dto/create-retweet.dto';
 import { RecordsService } from '../services/records.service';
 import { RetweetsService } from '../services/retweets.service';
-import { TweetsService } from '../services/tweets.service';
 
 @UseGuards(AuthGuard)
 @Controller('/retweets')

@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository, TreeRepository } from 'typeorm';
+import { Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
+import { CommentsCount } from 'src/interfaces/comments-count.interface';
 import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
@@ -81,7 +82,7 @@ export class CommentsService {
         });
 
         if (!comment) {
-            throw new NotFoundException({ message: 'comment not found' });
+            throw new NotFoundException('comment not found');
         }
 
         return comment;
@@ -98,7 +99,7 @@ export class CommentsService {
         }
 
         if (!record) {
-            throw new NotFoundException({ message: 'record not found' });
+            throw new NotFoundException('record not found');
         }
 
         const comment = this.recordsTreeRepository.create({
@@ -124,53 +125,73 @@ export class CommentsService {
         return comment;
     }
 
-    public async getCommentsTree(record: RecordsEntity): Promise<RecordsEntity> {
+    public async getRecordCommentsCount(record: RecordsEntity): Promise<CommentsCount> {
         if (!record) {
-            throw new NotFoundException({ message: 'record not found' });
+            throw new NotFoundException('record not found');
         }
 
-        const descendantsTree = await this.recordsTreeRepository.findDescendantsTree(record, {
-            relations: ['images'],
-        });
+        const recordDescendantsTree = await this.recordsTreeRepository.findDescendantsTree(record);
+        const commentsCount = this.findCommentsCountInRecordDescendantsTree(recordDescendantsTree);
 
-        const commentsTree = this.filterDescendantsTreeForCommentsTree(descendantsTree);
-
-        return commentsTree;
+        return {
+            commentsCount,
+        };
     }
 
-    public getRecordUpperLevelComments(record: RecordsEntity): Promise<RecordsEntity[]> {
-        if (!record) {
-            throw new NotFoundException({ message: 'record not found' });
-        }
+    private findCommentsCountInRecordDescendantsTree(recordDescendantsTree: RecordsEntity) {
+        let commentsCount = 0;
 
-        // return this.recordsTreeRepository
-        //     .createQueryBuilder('records')
-        //     .where(`records."parentId" = :recordId`, { recordId: record.id })
-        //     .getMany();
-
-        return this.recordsTreeRepository.find({
-            where: {
-                parent: record,
-                isComment: true,
-            },
-            relations: {
-                images: true,
-            },
-        });
-    }
-
-    private filterDescendantsTreeForCommentsTree(descendantsTree: RecordsEntity): RecordsEntity {
-        descendantsTree.children = descendantsTree.children.filter((child: RecordsEntity) => {
-            if (child.isComment) {
-                child = this.filterDescendantsTreeForCommentsTree(child);
-
-                return true;
-            } else {
-                return false;
+        recordDescendantsTree.children.forEach((childRecord: RecordsEntity): void => {
+            if (childRecord.isComment) {
+                commentsCount = commentsCount + 1 + this.findCommentsCountInRecordDescendantsTree(childRecord);
             }
         });
 
-        return descendantsTree;
+        return commentsCount;
+    }
+
+    public async getRecordCommentsTree(record: RecordsEntity): Promise<RecordsEntity> {
+        if (!record) {
+            throw new NotFoundException('record not found');
+        }
+
+        const recordDescendantsTree = await this.recordsTreeRepository.findDescendantsTree(record, {
+            relations: ['images'],
+        });
+
+        const recordCommentsTree = this.filterRecordDescendantsTreeForCommentsTree(recordDescendantsTree);
+
+        return recordCommentsTree;
+    }
+
+    public getRecordCommentsUpperLevel(record: RecordsEntity): Promise<RecordsEntity[]> {
+        if (!record) {
+            throw new NotFoundException('record not found');
+        }
+
+        return this.recordsTreeRepository
+            .createQueryBuilder('records')
+            .leftJoinAndSelect('records.images', 'images')
+            .leftJoinAndSelect('records.author', 'author')
+            .where(`records."parentId" = :recordId`, { recordId: record.id })
+            .orderBy('records.createdAt', 'DESC')
+            .getMany();
+    }
+
+    private filterRecordDescendantsTreeForCommentsTree(recordDescendantsTree: RecordsEntity): RecordsEntity {
+        recordDescendantsTree.children = recordDescendantsTree.children.filter(
+            (recordChild: RecordsEntity): boolean => {
+                if (recordChild.isComment) {
+                    recordChild = this.filterRecordDescendantsTreeForCommentsTree(recordChild);
+
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+        );
+
+        return recordDescendantsTree;
     }
 
     public async clearCommentAndMarkAsDeleted(comment: RecordsEntity): Promise<RecordsEntity> {
