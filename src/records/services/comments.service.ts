@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, TreeRepository } from 'typeorm';
 
 import { FilesService } from 'src/files/files.service';
+import { CommentsCount } from 'src/interfaces/comments-count.interface';
 import { RestrictionsEntity } from 'src/restrictions/restrictions.entity';
 import { UsersEntity } from 'src/users/entities/users.entity';
 
@@ -81,7 +82,7 @@ export class CommentsService {
         });
 
         if (!comment) {
-            throw new NotFoundException({ message: 'comment not found' });
+            throw new NotFoundException('comment not found');
         }
 
         return comment;
@@ -98,7 +99,7 @@ export class CommentsService {
         }
 
         if (!record) {
-            throw new NotFoundException({ message: 'record not found' });
+            throw new NotFoundException('record not found');
         }
 
         const comment = this.recordsTreeRepository.create({
@@ -124,9 +125,34 @@ export class CommentsService {
         return comment;
     }
 
+    public async getRecordCommentsCount(record: RecordsEntity): Promise<CommentsCount> {
+        if (!record) {
+            throw new NotFoundException('record not found');
+        }
+
+        const recordDescendantsTree = await this.recordsTreeRepository.findDescendantsTree(record);
+        const commentsCount = this.findCommentsCountInRecordDescendantsTree(recordDescendantsTree);
+
+        return {
+            commentsCount,
+        };
+    }
+
+    private findCommentsCountInRecordDescendantsTree(recordDescendantsTree: RecordsEntity) {
+        let commentsCount = 0;
+
+        recordDescendantsTree.children.forEach((childRecord: RecordsEntity): void => {
+            if (childRecord.isComment) {
+                commentsCount = commentsCount + 1 + this.findCommentsCountInRecordDescendantsTree(childRecord);
+            }
+        });
+
+        return commentsCount;
+    }
+
     public async getCommentsTree(record: RecordsEntity): Promise<RecordsEntity> {
         if (!record) {
-            throw new NotFoundException({ message: 'record not found' });
+            throw new NotFoundException('record not found');
         }
 
         const descendantsTree = await this.recordsTreeRepository.findDescendantsTree(record, {
@@ -140,7 +166,7 @@ export class CommentsService {
 
     public getRecordUpperLevelComments(record: RecordsEntity): Promise<RecordsEntity[]> {
         if (!record) {
-            throw new NotFoundException({ message: 'record not found' });
+            throw new NotFoundException('record not found');
         }
 
         // return this.recordsTreeRepository
@@ -163,7 +189,7 @@ export class CommentsService {
     }
 
     private filterDescendantsTreeForCommentsTree(descendantsTree: RecordsEntity): RecordsEntity {
-        descendantsTree.children = descendantsTree.children.filter((child: RecordsEntity) => {
+        descendantsTree.children = descendantsTree.children.filter((child: RecordsEntity): boolean => {
             if (child.isComment) {
                 child = this.filterDescendantsTreeForCommentsTree(child);
 

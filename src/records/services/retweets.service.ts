@@ -116,7 +116,7 @@ export class RetweetsService {
         imageFiles: Array<Express.Multer.File> = [],
     ): Promise<RecordsEntity> {
         if (!record) {
-            throw new NotFoundException({ message: 'record not found' });
+            throw new NotFoundException('record not found');
         }
 
         const retweet = this.recordsTreeRepository.create({

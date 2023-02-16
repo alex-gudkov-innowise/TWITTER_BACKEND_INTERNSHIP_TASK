@@ -64,6 +64,13 @@ export class CommentsController {
         return this.commentsService.createCommentOnRecord(createCommentDto, currentUser, record, imageFiles);
     }
 
+    @Get('/:recordId/comments-count')
+    public async getRecordCommentsCount(@Param('recordId') recordId: string) {
+        const record = await this.recordsService.getRecordById(recordId);
+
+        return this.commentsService.getRecordCommentsCount(record);
+    }
+
     @Get('/:commentId')
     public async getCommentById(
         @Param('commentId') commentId: string,
