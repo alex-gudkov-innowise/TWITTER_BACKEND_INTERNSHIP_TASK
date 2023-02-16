@@ -1,4 +1,5 @@
 import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
+import { get } from 'http';
 
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
 import { AuthGuard } from 'src/guards/auth.guard';
@@ -31,5 +32,13 @@ export class UsersController {
         const user = await this.usersService.getUserById(userId);
 
         return this.usersService.deleteUser(user);
+    }
+
+    @UseGuards(AuthGuard)
+    @Get('/:userId/profile-images')
+    public async getUserProfileImages(@Param('userId') userId: string) {
+        const user = await this.usersService.getUserById(userId);
+
+        return this.usersService.getUserProfileImages(user);
     }
 }
