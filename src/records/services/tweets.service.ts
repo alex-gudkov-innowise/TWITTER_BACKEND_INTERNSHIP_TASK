@@ -42,8 +42,6 @@ export class TweetsService {
             throw new NotFoundException('user not found');
         }
 
-        console.log(user);
-
         // return this.recordsTreeRepository.find({
         //     where: {
         //         isComment: false,
@@ -142,7 +140,7 @@ export class TweetsService {
             throw new BadRequestException('tweet cannot be empty');
         }
 
-        const tweet = this.recordsTreeRepository.create({
+        const tweet: RecordsEntity = this.recordsTreeRepository.create({
             text: createTweetDto.text,
             isComment: false,
             isRetweet: false,
@@ -151,15 +149,21 @@ export class TweetsService {
 
         await this.recordsTreeRepository.save(tweet);
 
-        imageFiles.forEach(async (imageFile) => {
-            const fileName = await this.filesService.writeImageFile(imageFile);
-            const image = this.recordImagesRepository.create({
-                name: fileName,
-                record: tweet,
-            });
+        tweet.images = await Promise.all(
+            imageFiles.map(async (imageFile): Promise<RecordImagesEntity> => {
+                const fileName = await this.filesService.writeImageFile(imageFile);
+                const image = this.recordImagesRepository.create({
+                    name: fileName,
+                    record: tweet,
+                });
 
-            await this.recordImagesRepository.save(image);
-        });
+                await this.recordImagesRepository.save(image);
+
+                image.record = undefined;
+
+                return image;
+            }),
+        );
 
         return tweet;
     }
@@ -173,8 +177,6 @@ export class TweetsService {
             .createQueryBuilder('record_images')
             .where(`record_images."recordId" = :tweetId`, { tweetId: tweet.id })
             .getMany();
-
-        console.log(tweetImages);
 
         tweetImages.forEach(async (tweetImage: RecordImagesEntity) => {
             this.filesService.removeImageFile(tweetImage.name);

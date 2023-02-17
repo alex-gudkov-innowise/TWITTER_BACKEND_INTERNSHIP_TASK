@@ -112,15 +112,21 @@ export class CommentsService {
 
         await this.recordsTreeRepository.save(comment);
 
-        imageFiles.forEach(async (imageFile) => {
-            const fileName = await this.filesService.writeImageFile(imageFile);
-            const image = this.recordImagesRepository.create({
-                name: fileName,
-                record: comment,
-            });
+        comment.images = await Promise.all(
+            imageFiles.map(async (imageFile): Promise<RecordImagesEntity> => {
+                const fileName = await this.filesService.writeImageFile(imageFile);
+                const image = this.recordImagesRepository.create({
+                    name: fileName,
+                    record: comment,
+                });
 
-            await this.recordImagesRepository.save(image);
-        });
+                await this.recordImagesRepository.save(image);
+
+                image.record = undefined;
+
+                return image;
+            }),
+        );
 
         return comment;
     }
