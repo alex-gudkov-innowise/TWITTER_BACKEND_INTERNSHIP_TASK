@@ -42,6 +42,8 @@ export class TweetsService {
             throw new NotFoundException('user not found');
         }
 
+        console.log(user);
+
         // return this.recordsTreeRepository.find({
         //     where: {
         //         isComment: false,
@@ -60,8 +62,7 @@ export class TweetsService {
             .createQueryBuilder('records')
             .leftJoinAndSelect('records.images', 'images')
             .leftJoinAndSelect('records.author', 'author')
-            .where(`records."authorId" = :userId`, { userId: user.id })
-            .where(`records."isComment" = FALSE`)
+            .where(`records."isComment" = FALSE AND records."authorId" = :userId`, { userId: user.id })
             .orderBy('records.createdAt', 'DESC')
             .getMany();
     }
@@ -78,6 +79,23 @@ export class TweetsService {
             order: {
                 createdAt: 'DESC',
             },
+        });
+    }
+
+    public getPaginatedAllTweets(page: number, limit: number) {
+        return this.recordsTreeRepository.find({
+            where: {
+                isComment: false,
+            },
+            relations: {
+                images: true,
+                author: true,
+            },
+            order: {
+                createdAt: 'DESC',
+            },
+            skip: page * limit,
+            take: limit,
         });
     }
 
@@ -146,7 +164,7 @@ export class TweetsService {
         return tweet;
     }
 
-    public async deleteTweet(tweet: RecordsEntity): Promise<DeleteResult> {
+    public async deleteTweet(tweet: RecordsEntity): Promise<RecordsEntity> {
         if (!tweet) {
             throw new NotFoundException('tweet not found');
         }
@@ -156,11 +174,13 @@ export class TweetsService {
             .where(`record_images."recordId" = :tweetId`, { tweetId: tweet.id })
             .getMany();
 
+        console.log(tweetImages);
+
         tweetImages.forEach(async (tweetImage: RecordImagesEntity) => {
             this.filesService.removeImageFile(tweetImage.name);
-            await this.recordImagesRepository.delete(tweetImage);
+            await this.recordImagesRepository.remove(tweetImage);
         });
 
-        return this.recordsTreeRepository.delete(tweet);
+        return this.recordsTreeRepository.remove(tweet);
     }
 }

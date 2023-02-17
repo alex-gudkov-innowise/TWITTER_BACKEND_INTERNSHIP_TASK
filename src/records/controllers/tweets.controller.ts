@@ -1,5 +1,17 @@
 import { ForbiddenError } from '@casl/ability';
-import { Body, Controller, Delete, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseIntPipe,
+    Post,
+    Query,
+    UploadedFiles,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
 import { CurrentUserRolesDecorator } from 'src/decorators/current-user-roles.decorator';
@@ -52,6 +64,14 @@ export class TweetsController {
     @Get('/all')
     public getAllTweets() {
         return this.tweetsService.getAllTweets();
+    }
+
+    @Get('/all/paginate')
+    public getPaginatedAllTweets(
+        @Query('page', ParseIntPipe) page: number,
+        @Query('limit', ParseIntPipe) limit: number,
+    ) {
+        return this.tweetsService.getPaginatedAllTweets(page, limit);
     }
 
     @Post('/')
