@@ -42,19 +42,19 @@ export class TweetsService {
             throw new NotFoundException('user not found');
         }
 
-        // return this.recordsTreeRepository.find({
-        //     where: {
-        //         isComment: false,
-        //         author: user,
-        //     },
-        //     relations: {
-        //         images: true,
-        //         author: true,
-        //     },
-        //     order: {
-        //         createdAt: 'DESC',
-        //     },
-        // });
+        return this.recordsTreeRepository
+            .createQueryBuilder('records')
+            .leftJoinAndSelect('records.images', 'images')
+            .leftJoinAndSelect('records.author', 'author')
+            .where(`records."isComment" = FALSE AND records."authorId" = :userId`, { userId: user.id })
+            .orderBy('records.createdAt', 'DESC')
+            .getMany();
+    }
+
+    public getPaginatedAllUserTweets(user: UsersEntity, page: number, limit: number): Promise<RecordsEntity[]> {
+        if (!user) {
+            throw new NotFoundException('user not found');
+        }
 
         return this.recordsTreeRepository
             .createQueryBuilder('records')
@@ -62,6 +62,8 @@ export class TweetsService {
             .leftJoinAndSelect('records.author', 'author')
             .where(`records."isComment" = FALSE AND records."authorId" = :userId`, { userId: user.id })
             .orderBy('records.createdAt', 'DESC')
+            .skip(page * limit)
+            .take(limit)
             .getMany();
     }
 

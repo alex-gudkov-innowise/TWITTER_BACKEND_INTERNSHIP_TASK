@@ -61,6 +61,26 @@ export class TweetsController {
         return this.tweetsService.getAllUserTweets(user);
     }
 
+    @Get('/paginate/user/:userId')
+    public async getPaginatedAllUserTweets(
+        @Param('userId') userId: string,
+        @CurrentUserDecorator() currentUser: UsersEntity,
+        @CurrentUserRolesDecorator() currentUserRoles: string[],
+        @Query('page', ParseIntPipe) page: number,
+        @Query('limit', ParseIntPipe) limit: number,
+    ) {
+        const user = await this.usersService.getUserById(userId);
+        const currentUserAbility = await this.caslAbilityFactory.defineAbilityToReadTweets(
+            currentUser,
+            currentUserRoles,
+            user,
+        );
+
+        ForbiddenError.from(currentUserAbility).throwUnlessCan('read', 'tweets');
+
+        return this.tweetsService.getPaginatedAllUserTweets(user, page, limit);
+    }
+
     @Get('/all')
     public getAllTweets() {
         return this.tweetsService.getAllTweets();
