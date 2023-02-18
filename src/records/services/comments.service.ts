@@ -170,7 +170,7 @@ export class CommentsService {
         return recordCommentsTree;
     }
 
-    public getRecordCommentsUpperLevel(record: RecordsEntity): Promise<RecordsEntity[]> {
+    public getUpperLevelCommentsOnRecord(record: RecordsEntity): Promise<RecordsEntity[]> {
         if (!record) {
             throw new NotFoundException('record not found');
         }
@@ -181,6 +181,26 @@ export class CommentsService {
             .leftJoinAndSelect('records.author', 'author')
             .where(`records."parentId" = :recordId`, { recordId: record.id })
             .orderBy('records.createdAt', 'DESC')
+            .getMany();
+    }
+
+    public getPaginatedUpperLevelCommentsOnRecord(
+        record: RecordsEntity,
+        page: number,
+        limit: number,
+    ): Promise<RecordsEntity[]> {
+        if (!record) {
+            throw new NotFoundException('record not found');
+        }
+
+        return this.recordsTreeRepository
+            .createQueryBuilder('records')
+            .leftJoinAndSelect('records.images', 'images')
+            .leftJoinAndSelect('records.author', 'author')
+            .where(`records."parentId" = :recordId`, { recordId: record.id })
+            .orderBy('records.createdAt', 'DESC')
+            .skip(page * limit)
+            .take(limit)
             .getMany();
     }
 

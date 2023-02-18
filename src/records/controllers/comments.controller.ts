@@ -1,5 +1,17 @@
 import { ForbiddenError } from '@casl/ability';
-import { Body, Controller, Delete, Get, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseIntPipe,
+    Post,
+    Query,
+    UploadedFiles,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
 import { CurrentUserRolesDecorator } from 'src/decorators/current-user-roles.decorator';
@@ -108,10 +120,21 @@ export class CommentsController {
     }
 
     @Get('/upper-lever/record/:recordId')
-    public async getRecordCommentsUpperLevel(@Param('recordId') recordId: string) {
+    public async getUpperLevelCommentsOnRecord(@Param('recordId') recordId: string) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.commentsService.getRecordCommentsUpperLevel(record);
+        return this.commentsService.getUpperLevelCommentsOnRecord(record);
+    }
+
+    @Get('/upper-lever/paginate/record/:recordId')
+    public async getPaginatedUpperLevelCommentsOnRecord(
+        @Param('recordId') recordId: string,
+        @Query('page', ParseIntPipe) page: number,
+        @Query('limit', ParseIntPipe) limit: number,
+    ) {
+        const record = await this.recordsService.getRecordById(recordId);
+
+        return this.commentsService.getPaginatedUpperLevelCommentsOnRecord(record, page, limit);
     }
 
     @Delete('/:commentId')
