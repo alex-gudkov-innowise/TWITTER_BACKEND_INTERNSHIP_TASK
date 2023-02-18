@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { defaultUserProfileImages } from 'src/constants/default-user-profile-images';
 
@@ -28,17 +28,23 @@ export class UsersService {
         return this.usersRepository.findOneBy({ email });
     }
 
-    public createUser(createUserDto: CreateUserDto): Promise<UsersEntity> {
+    public async createUser(createUserDto: CreateUserDto): Promise<UsersEntity> {
         const user = this.usersRepository.create(createUserDto);
-        // const userProfileImages = this.userProfileImagesRepository.create({
-        //     user,
-        //     avatarImageName: defaultUserProfileImages.avatarImageName,
-        //     coverImageName: defaultUserProfileImages.coverImageName,
-        // });
 
-        // this.userProfileImagesRepository.save(userProfileImages);
+        await this.usersRepository.save(user);
+        // await this.createDefaultUserProfileImages(user);
 
-        return this.usersRepository.save(user);
+        return user;
+    }
+
+    public createDefaultUserProfileImages(user: UsersEntity): Promise<UserProfileImagesEntity> {
+        const userProfileImages = this.userProfileImagesRepository.create({
+            user,
+            avatarImageName: defaultUserProfileImages.avatarImageName,
+            coverImageName: defaultUserProfileImages.coverImageName,
+        });
+
+        return this.userProfileImagesRepository.save(userProfileImages);
     }
 
     public getUserProfileImages(user: UsersEntity): Promise<UserProfileImagesEntity> {

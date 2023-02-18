@@ -170,7 +170,7 @@ export class CommentsService {
         return recordCommentsTree;
     }
 
-    public getUpperLevelCommentsOnRecord(record: RecordsEntity): Promise<RecordsEntity[]> {
+    public getUpperLevelCommentsOfRecord(record: RecordsEntity): Promise<RecordsEntity[]> {
         if (!record) {
             throw new NotFoundException('record not found');
         }
@@ -184,7 +184,7 @@ export class CommentsService {
             .getMany();
     }
 
-    public getPaginatedUpperLevelCommentsOnRecord(
+    public getPaginatedUpperLevelCommentsOfRecord(
         record: RecordsEntity,
         page: number,
         limit: number,

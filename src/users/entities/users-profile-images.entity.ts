@@ -7,11 +7,11 @@ export class UserProfileImagesEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ default: null })
-    avatarImageName: string | null;
+    @Column({ nullable: false })
+    avatarImageName: string;
 
-    @Column({ default: null })
-    coverImageName: string | null;
+    @Column({ nullable: false })
+    coverImageName: string;
 
     @OneToOne(() => UsersEntity, (user: UsersEntity) => user.profileImages, {
         onDelete: 'CASCADE',

@@ -120,21 +120,21 @@ export class CommentsController {
     }
 
     @Get('/upper-lever/record/:recordId')
-    public async getUpperLevelCommentsOnRecord(@Param('recordId') recordId: string) {
+    public async getUpperLevelCommentsOfRecord(@Param('recordId') recordId: string) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.commentsService.getUpperLevelCommentsOnRecord(record);
+        return this.commentsService.getUpperLevelCommentsOfRecord(record);
     }
 
     @Get('/upper-lever/paginate/record/:recordId')
-    public async getPaginatedUpperLevelCommentsOnRecord(
+    public async getPaginatedUpperLevelCommentsOfRecord(
         @Param('recordId') recordId: string,
         @Query('page', ParseIntPipe) page: number,
         @Query('limit', ParseIntPipe) limit: number,
     ) {
         const record = await this.recordsService.getRecordById(recordId);
 
-        return this.commentsService.getPaginatedUpperLevelCommentsOnRecord(record, page, limit);
+        return this.commentsService.getPaginatedUpperLevelCommentsOfRecord(record, page, limit);
     }
 
     @Delete('/:commentId')
